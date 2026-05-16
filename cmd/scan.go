@@ -1,40 +1,69 @@
-/*
-Copyright © 2026 NAME HERE <EMAIL ADDRESS>
-
-*/
 package cmd
 
 import (
 	"fmt"
+	"time"
 
+	"github.com/mohamedlamineallal/MacosLeanStorage/internal/config"
+	"github.com/mohamedlamineallal/MacosLeanStorage/internal/scanner"
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
 )
 
 // scanCmd represents the scan command
 var scanCmd = &cobra.Command{
 	Use:   "scan",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Short: "Scan targets for old files",
+	Long:  `Scans the configured targets and lists files that exceed the age threshold.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		cfg, err := config.Load()
+		if err != nil {
+			return err
+		}
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("scan called")
+		s := scanner.New(logger)
+		
+		totalFiles := 0
+		var totalSize int64
+
+		for _, t := range cfg.Targets {
+			target := scanner.Target{
+				Name:        t.Name,
+				Path:        t.Path,
+				Threshold:   time.Duration(t.Threshold) * 24 * time.Hour,
+				SafetyLevel: t.SafetyLevel,
+			}
+
+			result, err := s.Scan(target)
+			if err != nil {
+				logger.Error("Scan failed for target", zap.String("name", t.Name), zap.Error(err))
+				continue
+			}
+
+			fmt.Printf("\nTarget: %s (%s)\n", result.TargetName, t.Path)
+			if len(result.Files) == 0 {
+				fmt.Println("  No files match cleanup criteria.")
+				continue
+			}
+
+			for _, file := range result.Files {
+				fmt.Printf("  [MATCH] %s\n", file)
+			}
+			fmt.Printf("  Found %d files, total size: %.2f MB\n", len(result.Files), float64(result.TotalSize)/(1024*1024))
+			
+			totalFiles += len(result.Files)
+			totalSize += result.TotalSize
+		}
+
+		fmt.Printf("\nSummary: Found %d files across all targets, total size: %.2f MB\n", totalFiles, float64(totalSize)/(1024*1024))
+		if cfg.DryRun {
+			fmt.Println("Running in DRY RUN mode. No files were deleted.")
+		}
+
+		return nil
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(scanCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// scanCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// scanCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
