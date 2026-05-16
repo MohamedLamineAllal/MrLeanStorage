@@ -10,8 +10,9 @@ import (
 
 // Config represents the application configuration
 type Config struct {
-	Targets []TargetConfig `mapstructure:"targets"`
-	DryRun  bool           `mapstructure:"dry_run"`
+	Targets  []TargetConfig `mapstructure:"targets"`
+	DryRun   bool           `mapstructure:"dry_run"`
+	Schedule string         `mapstructure:"schedule"` // Cron expression, e.g., "0 0 * * *" (daily at midnight)
 }
 
 // TargetConfig defines cleanup rules for a specific path
@@ -56,6 +57,7 @@ func CreateDefaultConfig(path string) error {
     threshold_days: 14
     safety_level: 1
 dry_run: true
+schedule: "0 0 * * *" # Daily at midnight
 `
 	return os.WriteFile(path, []byte(defaultConfig), 0644)
 }

@@ -36,7 +36,13 @@ Edit your config file to set `dry_run: false` or use the flag (if implemented/pl
 mls clean --dry-run=false
 ```
 
-### 5. Manage Configuration
+### 5. Automated Cleanup
+Start the background scheduler to perform cleanup automatically:
+```bash
+mls serve
+```
+
+### 6. Manage Configuration
 Open the configuration file in Finder:
 ```bash
 mls config open

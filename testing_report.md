@@ -3,7 +3,7 @@
 **Date:** Saturday, May 16, 2026
 
 ## Summary
-All implemented tests for the core packages (`config`, `scanner`, `cleaner`) have passed successfully. The project maintains high stability with automated verification of path expansion, age-based filtering, and safety mechanisms (dry-run).
+All implemented tests for the core packages (`config`, `scanner`, `cleaner`, `scheduler`) have passed successfully. The project maintains high stability with automated verification of path expansion, age-based filtering, safety mechanisms, and task scheduling.
 
 ## Detailed Results
 
@@ -28,9 +28,15 @@ ok      github.com/mohamedlamineallal/MacosLeanStorage/internal/config
 --- PASS: TestExpandPath (0.00s)
 PASS
 ok      github.com/mohamedlamineallal/MacosLeanStorage/internal/scanner
+
+=== RUN   TestScheduler
+--- PASS: TestScheduler (0.58s)
+PASS
+ok      github.com/mohamedlamineallal/MacosLeanStorage/internal/scheduler
 ```
 
 ## Coverage
 - **config:** Verified default config creation and path resolution.
 - **scanner:** Verified directory walking, path expansion (`~/`), and modification time filtering.
 - **cleaner:** Verified file deletion and dry-run safety.
+- **scheduler:** Verified task execution based on cron expressions with second-level precision.

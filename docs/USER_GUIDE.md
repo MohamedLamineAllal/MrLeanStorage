@@ -39,6 +39,14 @@ To actually delete the files, you have two options:
 1.  Set `dry_run: false` in your `~/.MacosLeanStorage.yaml`.
 2.  Use the flag: `mls clean --dry-run=false`
 
+### `serve`
+The `serve` command starts a background scheduler that runs the cleanup process according to the `schedule` defined in your configuration file.
+
+```bash
+mls serve
+```
+This is ideal for keeping your Mac lean without manual intervention.
+
 ### `config open`
 Opens the configuration file in Finder for easy editing.
 
@@ -55,6 +63,9 @@ A list of directories to monitor.
 
 ### `dry_run`
 Global safety switch. If `true`, no files are ever deleted.
+
+### `schedule`
+A cron expression (e.g., `"0 0 * * *"`) defining when the automated cleanup should run.
 
 ## Tips for Safe Cleanup
 1.  **Always scan first**: Before running `clean`, run `scan` to see what files are being targeted.
