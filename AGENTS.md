@@ -8,7 +8,7 @@ Bellow is the mode of operation that you need to follow. Make sure you don't mis
 
 ### Agentic Workflow
 
-- **Resumability**: At the start of every interaction, the agent MUST read `MEMORY.md` to understand the current phase, progress, and context.
+- **Resumability**: At the start of every interaction, the agent MUST read `MEMORY.md` to understand the current phase, progress, and context. As well as git commits.
 - **Prompt Logging**: The agent MUST log every significant user prompt into `Prompts.log` to maintain a history of directives and intent.
 - **Contextual Awareness**: The agent should always reference `MEMORY.md` before proposing new actions to ensure continuity.
 - **Incremental Updates**: Every significant step or decision must be recorded in `MEMORY.md`.
