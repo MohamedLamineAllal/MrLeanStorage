@@ -28,16 +28,35 @@ type Result struct {
 
 // Scanner handles the directory traversal and analysis
 type Scanner struct {
-	logger *zap.Logger
+	logger         *zap.Logger
+	ignorePatterns []string
 }
 
 // New creates a new Scanner
-func New(logger *zap.Logger) *Scanner {
-	return &Scanner{logger: logger}
+func New(logger *zap.Logger, ignorePatterns []string) *Scanner {
+	return &Scanner{logger: logger, ignorePatterns: ignorePatterns}
+}
+
+// isIgnored checks if a file name matches any of the ignore patterns
+func (s *Scanner) isIgnored(name string) bool {
+	for _, pattern := range s.ignorePatterns {
+		matched, err := filepath.Match(pattern, name)
+		if err == nil && matched {
+			return true
+		}
+	}
+	return false
 }
 
 // Scan analyzes a target and returns a list of files that match cleanup criteria
-func (s *Scanner) Scan(target Target) (*Result, error) {
+func (s *Scanner) Scan(target Target, targetIgnorePatterns []string) (*Result, error) {
+	// Merge global ignore patterns with target-specific ones
+	allIgnorePatterns := append(s.ignorePatterns, targetIgnorePatterns...)
+	// Temporarily override the scanner's ignore patterns for this scan
+	originalPatterns := s.ignorePatterns
+	s.ignorePatterns = allIgnorePatterns
+	defer func() { s.ignorePatterns = originalPatterns }()
+
 	expandedPath, err := expandPath(target.Path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to expand path %s: %w", target.Path, err)
@@ -101,6 +120,9 @@ func (s *Scanner) walkFiles(path string, threshold time.Duration, matches *[]str
 	}
 
 	for _, entry := range entries {
+		if s.isIgnored(entry.Name()) {
+			continue
+		}
 		fullPath := filepath.Join(path, entry.Name())
 		info, err := entry.Info()
 		if err != nil {
@@ -138,6 +160,12 @@ func (s *Scanner) checkStaleness(path string, threshold time.Duration, now time.
 	err = filepath.Walk(path, func(p string, info os.FileInfo, err error) error {
 		if err != nil {
 			return nil // Skip errors
+		}
+		if s.isIgnored(info.Name()) {
+			if info.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
 		}
 		if !info.IsDir() {
 			if now.Sub(info.ModTime()) <= threshold {

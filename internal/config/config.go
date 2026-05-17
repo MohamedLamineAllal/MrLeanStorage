@@ -10,18 +10,20 @@ import (
 
 // Config represents the application configuration
 type Config struct {
-	Targets  []TargetConfig `mapstructure:"targets"`
-	DryRun   bool           `mapstructure:"dry_run"`
-	Schedule string         `mapstructure:"schedule"` // Cron expression, e.g., "0 0 * * *" (daily at midnight)
+	Targets        []TargetConfig `mapstructure:"targets"`
+	IgnorePatterns []string       `mapstructure:"ignore_patterns"`
+	DryRun         bool           `mapstructure:"dry_run"`
+	Schedule       string         `mapstructure:"schedule"` // Cron expression, e.g., "0 0 * * *" (daily at midnight)
 }
 
 // TargetConfig defines cleanup rules for a specific path
 type TargetConfig struct {
-	Name        string `mapstructure:"name"`
-	Path        string `mapstructure:"path"`
-	Threshold   int    `mapstructure:"threshold_days"`
-	SafetyLevel int    `mapstructure:"safety_level"`
-	Type        string `mapstructure:"type"` // "file", "folder", or "both"
+	Name           string   `mapstructure:"name"`
+	Path           string   `mapstructure:"path"`
+	Threshold      int      `mapstructure:"threshold_days"`
+	SafetyLevel    int      `mapstructure:"safety_level"`
+	Type           string   `mapstructure:"type"` // "file", "folder", or "both"
+	IgnorePatterns []string `mapstructure:"ignore_patterns"`
 }
 
 // Load reads the configuration from viper

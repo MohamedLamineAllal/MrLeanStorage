@@ -27,9 +27,9 @@ Build a high-performance, safe, and efficient storage cleanup tool for macOS, fo
 *   **Immutable Rules**: Rules for "100% safe" directories are hardcoded or verified by a strict schema.
 *   **Exclusion List**: Built-in protection for critical system folders (`/System`, `/Library/CoreServices`).
 
-### Optimization
-*   **Caching**: Cache the results of a scan if running frequently, though for storage cleanup, fresh data is usually better.
-*   **Incremental Scanning**: Use `atime` to quickly skip files that were recently accessed.
+### Exclusion/Ignore Mechanism
+* **Ignore Patterns**: A flexible system to ignore files or folders based on user-provided glob patterns (e.g., `.DS_Store`). This is configurable both globally and per-target, and is integrated into both file walking and deep staleness checks for high performance.
+
 
 ## 4. Library Choices
 *   **CLI**: `github.com/spf13/cobra` - Industry standard for Go CLIs.

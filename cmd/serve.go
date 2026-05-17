@@ -34,7 +34,7 @@ var serveCmd = &cobra.Command{
 		task := func() error {
 			logger.Info("Starting scheduled cleanup")
 
-			sc := scanner.New(logger)
+			sc := scanner.New(logger, cfg.IgnorePatterns)
 			cl := cleaner.New(logger, cfg.DryRun)
 
 			var allPaths []string
@@ -47,7 +47,7 @@ var serveCmd = &cobra.Command{
 					Type:        t.Type,
 				}
 
-				result, err := sc.Scan(target)
+				result, err := sc.Scan(target, t.IgnorePatterns)
 				if err != nil {
 					logger.Error("Scan failed", zap.String("target", t.Name), zap.Error(err))
 					continue

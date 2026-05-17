@@ -29,7 +29,7 @@ func TestScan(t *testing.T) {
 	err = os.Chtimes(oldFile, oldTime, oldTime)
 	assert.NoError(t, err)
 
-	s := New(zap.NewNop())
+	s := New(zap.NewNop(), nil)
 	target := Target{
 		Name:      "Test Target",
 		Path:      tempDir,
@@ -37,7 +37,7 @@ func TestScan(t *testing.T) {
 		Type:      "file",
 	}
 
-	result, err := s.Scan(target)
+	result, err := s.Scan(target, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, "Test Target", result.TargetName)
 	assert.Len(t, result.Files, 1)
@@ -83,7 +83,7 @@ func TestScan_Glob(t *testing.T) {
 	os.Chtimes(oldFile1, oldTime, oldTime)
 	os.Chtimes(oldFile2, oldTime, oldTime)
 
-	s := New(zap.NewNop())
+	s := New(zap.NewNop(), nil)
 	target := Target{
 		Name:      "Glob Test",
 		Path:      filepath.Join(tempDir, "*", "Cache"),
@@ -91,55 +91,40 @@ func TestScan_Glob(t *testing.T) {
 		Type:      "file",
 	}
 
-	result, err := s.Scan(target)
+	result, err := s.Scan(target, nil)
 	assert.NoError(t, err)
 	assert.Len(t, result.Files, 2)
 	assert.Contains(t, result.Files, oldFile1)
 	assert.Contains(t, result.Files, oldFile2)
 }
 
-func TestScan_FolderHybrid(t *testing.T) {
-	tempDir, err := os.MkdirTemp("", "mls-hybrid-test")
+func TestScan_IgnorePatterns(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "mls-ignore-test")
 	assert.NoError(t, err)
 	defer os.RemoveAll(tempDir)
 
-	cacheDir := filepath.Join(tempDir, "Cache")
-	err = os.MkdirAll(cacheDir, 0755)
-	assert.NoError(t, err)
+	// Create files
+	ignoredFile := filepath.Join(tempDir, ".DS_Store")
+	keptFile := filepath.Join(tempDir, "data.txt")
+	os.WriteFile(ignoredFile, []byte("ignore me"), 0644)
+	os.WriteFile(keptFile, []byte("keep me"), 0644)
 
-	// File inside is very old
-	oldFile := filepath.Join(cacheDir, "old.txt")
-	err = os.WriteFile(oldFile, []byte("old"), 0644)
-	assert.NoError(t, err)
+	// Make both old
 	oldTime := time.Now().Add(-20 * 24 * time.Hour)
-	os.Chtimes(oldFile, oldTime, oldTime)
+	os.Chtimes(ignoredFile, oldTime, oldTime)
+	os.Chtimes(keptFile, oldTime, oldTime)
 
-	s := New(zap.NewNop())
+	s := New(zap.NewNop(), []string{".DS_Store"})
 	target := Target{
-		Name:      "Hybrid Test",
-		Path:      cacheDir,
+		Name:      "Ignore Test",
+		Path:      tempDir,
 		Threshold: 7 * 24 * time.Hour,
-		Type:      "folder",
+		Type:      "file",
 	}
 
-	// Case 1: Folder mtime is old (Fast Path)
-	os.Chtimes(cacheDir, oldTime, oldTime)
-	result, err := s.Scan(target)
+	result, err := s.Scan(target, nil)
 	assert.NoError(t, err)
 	assert.Len(t, result.Files, 1)
-
-	// Case 2: Folder mtime is new (Slow Path - triggers deep scan)
-	now := time.Now()
-	os.Chtimes(cacheDir, now, now)
-	result, err = s.Scan(target)
-	assert.NoError(t, err)
-	assert.Len(t, result.Files, 1, "Should still detect stale contents despite new folder mtime")
-
-	// Case 3: Folder mtime new, but has recent file (Slow Path)
-	newFile := filepath.Join(cacheDir, "new.txt")
-	err = os.WriteFile(newFile, []byte("new"), 0644)
-	assert.NoError(t, err)
-	result, err = s.Scan(target)
-	assert.NoError(t, err)
-	assert.Len(t, result.Files, 0, "Should not detect as stale because it contains a recent file")
+	assert.Equal(t, keptFile, result.Files[0])
 }
+

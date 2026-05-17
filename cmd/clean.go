@@ -22,7 +22,7 @@ var cleanCmd = &cobra.Command{
 			return err
 		}
 
-		s := scanner.New(logger)
+		s := scanner.New(logger, cfg.IgnorePatterns)
 		c := cleaner.New(logger, cfg.DryRun)
 
 		var allPaths []string
@@ -36,7 +36,7 @@ var cleanCmd = &cobra.Command{
 				Type:        t.Type,
 			}
 
-			result, err := s.Scan(target)
+			result, err := s.Scan(target, t.IgnorePatterns)
 			if err != nil {
 				logger.Error("Scan failed for target", zap.String("name", t.Name), zap.Error(err))
 				continue
