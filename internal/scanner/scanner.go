@@ -77,32 +77,36 @@ func (s *Scanner) Scan(target Target, targetIgnorePatterns []string) (*Result, e
 	for _, p := range paths {
 		info, err := os.Stat(p)
 		if err != nil {
-			s.logger.Warn("Failed to stat glob match", zap.String("path", p), zap.Error(err))
+			s.logger.Debug("Failed to stat path", zap.String("path", p), zap.Error(err))
 			continue
 		}
 
-		if (target.Type == "folder" || target.Type == "both") && info.IsDir() {
-			isStale, err := s.checkStaleness(p, target.Threshold, now)
-			if err != nil {
-				s.logger.Warn("Failed to check folder staleness", zap.String("path", p), zap.Error(err))
-				continue
-			}
-
-			if isStale {
-				size, err := s.getDirSize(p)
+		// Handle directory-based logic
+		if info.IsDir() {
+			if target.Type == "folder" || target.Type == "both" {
+				isStale, err := s.checkStaleness(p, target.Threshold, now)
 				if err != nil {
-					s.logger.Warn("Failed to calculate directory size", zap.String("path", p), zap.Error(err))
+					s.logger.Debug("Failed to check folder staleness", zap.String("path", p), zap.Error(err))
+					continue
 				}
-				result.Files = append(result.Files, p)
-				result.TotalSize += size
+
+				if isStale {
+					size, err := s.getDirSize(p)
+					if err != nil {
+						s.logger.Debug("Failed to calculate directory size", zap.String("path", p), zap.Error(err))
+					}
+					result.Files = append(result.Files, p)
+					result.TotalSize += size
+				}
 			}
 			continue
 		}
 
+		// Handle file-based logic
 		if target.Type == "file" || target.Type == "both" || target.Type == "" {
 			err = s.walkFiles(p, target.Threshold, &result.Files, &result.TotalSize, now)
 			if err != nil {
-				s.logger.Warn("Failed to walk files", zap.String("path", p), zap.Error(err))
+				s.logger.Debug("Failed to walk files", zap.String("path", p), zap.Error(err))
 			}
 		}
 	}
