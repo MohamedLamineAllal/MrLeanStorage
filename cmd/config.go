@@ -16,14 +16,28 @@ var configCmd = &cobra.Command{
 
 var openConfigCmd = &cobra.Command{
 	Use:   "open",
-	Short: "Open the configuration file in Finder",
+	Short: "Open the configuration file in the default application",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		configFile := viper.ConfigFileUsed()
 		if configFile == "" {
 			return fmt.Errorf("no configuration file found")
 		}
 
-		fmt.Printf("Opening configuration file: %s\n", configFile)
+		fmt.Printf("Opening configuration file in default application: %s\n", configFile)
+		return exec.Command("open", configFile).Run()
+	},
+}
+
+var revealConfigCmd = &cobra.Command{
+	Use:   "reveal",
+	Short: "Reveal the configuration file in Finder",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		configFile := viper.ConfigFileUsed()
+		if configFile == "" {
+			return fmt.Errorf("no configuration file found")
+		}
+
+		fmt.Printf("Revealing configuration file in Finder: %s\n", configFile)
 		return exec.Command("open", "-R", configFile).Run()
 	},
 }
@@ -31,4 +45,5 @@ var openConfigCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(configCmd)
 	configCmd.AddCommand(openConfigCmd)
+	configCmd.AddCommand(revealConfigCmd)
 }

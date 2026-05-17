@@ -9,6 +9,7 @@ The project is currently in the **Development & Feature Refinement** phase. We h
 - **Scanner**: Implemented robust, concurrent directory traversal using `os.ReadDir` for maximum efficiency (compliant with `AGENTS.md`). Supports both individual file pruning and entire directory removal based on configuration.
 - **Cleaner**: Implemented safe file deletion with dry-run support by default. Handles both file and recursive directory removal.
 - **Logging**: Refined CLI output with concise summaries and `--verbose` support for detailed match listing.
+- **Config CLI**: Enhanced config management with `mls config open` (default app) and `mls config reveal` (Finder).
 - **Scheduler**: Implemented a periodic task scheduler with persistent last-run state tracking.
 - **Cleanup Inventory**: Populated configuration with the full list of safe cleanup targets.
 - **Compliance**: Restored architectural compliance to `AGENTS.md` mandates, including `Prompts.log` enforcement.

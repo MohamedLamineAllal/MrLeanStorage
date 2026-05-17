@@ -12,11 +12,14 @@ MacosLeanStorage (mls) is a command-line tool designed to help macOS users recla
 ### Initial Setup
 When you first run `mls`, it creates a default configuration file in your home directory: `~/.MacosLeanStorage.yaml`. 
 
-To see where it is or to edit it, run:
+To see where it is or to reveal it in Finder, run:
+```bash
+mls config reveal
+```
+To open it in your default editor, run:
 ```bash
 mls config open
 ```
-This will reveal the file in Finder.
 
 ## Commands
 
@@ -56,7 +59,18 @@ mls serve
 This is ideal for keeping your Mac lean without manual intervention.
 
 ### `config open`
-Opens the configuration file in Finder for easy editing.
+Opens the configuration file in the default application (e.g., your preferred text editor).
+
+```bash
+mls config open
+```
+
+### `config reveal`
+Reveals the configuration file in Finder.
+
+```bash
+mls config reveal
+```
 
 ## Configuration Guide
 
