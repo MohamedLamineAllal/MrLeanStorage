@@ -128,3 +128,33 @@ func TestScan_IgnorePatterns(t *testing.T) {
 	assert.Equal(t, keptFile, result.Files[0])
 }
 
+
+func TestScan_RecursiveGlob(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "mls-recursive-glob-test")
+	assert.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+
+	// Create structure: tempDir/a/b/file.txt
+	subDir := filepath.Join(tempDir, "a", "b")
+	err = os.MkdirAll(subDir, 0755)
+	assert.NoError(t, err)
+	targetFile := filepath.Join(subDir, "old.txt")
+	os.WriteFile(targetFile, []byte("content"), 0644)
+
+	// Make it old
+	oldTime := time.Now().Add(-20 * 24 * time.Hour)
+	os.Chtimes(targetFile, oldTime, oldTime)
+
+	s := New(zap.NewNop(), nil)
+	target := Target{
+		Name:      "Recursive Glob Test",
+		Path:      filepath.Join(tempDir, "**", "old.txt"),
+		Threshold: 7 * 24 * time.Hour,
+		Type:      "file",
+	}
+
+	result, err := s.Scan(target, nil)
+	assert.NoError(t, err)
+	assert.Len(t, result.Files, 1)
+	assert.Equal(t, targetFile, result.Files[0])
+}

@@ -63,6 +63,11 @@ targets:
 dry_run: true
 ```
 
+### Configuration Patterns
+- The tool supports standard file globbing.
+- **Recursive Globbing**: Use the `**` pattern to match directories recursively (e.g., `~/Library/Application Support/MyApp/**/Cache/*`). This is powered by the `doublestar` library.
+
+
 ## Testing
 Run the test suite:
 ```bash

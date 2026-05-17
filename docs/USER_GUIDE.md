@@ -72,9 +72,14 @@ Reveals the configuration file in Finder.
 mls config reveal
 ```
 
-## Configuration Guide
+### Configuration Guide
 
 The configuration file is written in YAML.
+
+### `path`
+The directory path to monitor. You can use standard file globbing.
+- **Recursive Globbing**: You can use the `**` pattern to match directories recursively (e.g., `~/Library/Application Support/MyApp/**/Cache/*`). This allows for deep path resolution.
+
 
 ### `targets`
 A list of directories to monitor.

@@ -32,3 +32,6 @@ User: When running scan the configuration file when doesn't exist is not being c
 
 [2026-05-17]
 - Request: "Can you confirm for me if this syntax is supported or not... If not supported support it. Analyze my question as well."
+
+[2026-05-17]
+- Request: "You didn't write tests and run tests for the glob ** syntax. Also add in README.md and user guide the instruction for such patterns."
