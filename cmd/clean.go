@@ -57,11 +57,10 @@ var cleanCmd = &cobra.Command{
 		}
 
 		if cfg.DryRun {
-			fmt.Printf("\nDRY RUN Summary: Would have deleted %d files, freeing %.2f MB\n", count, float64(size)/(1024*1024))
+			fmt.Printf("\nDRY RUN Summary: Would have deleted %d files, freeing %.2f MB\nIf you want to perform the actual cleanup, run the command mls clean --dry-run=false", count, float64(size)/(1024*1024))
 		} else {
 			fmt.Printf("\nClean Summary: Deleted %d files, freed %.2f MB\n", count, float64(size)/(1024*1024))
 		}
-		fmt.Printf("Mode: %s\n", map[bool]string{true: "DRY RUN", false: "LIVE"}[cfg.DryRun])
 
 		return nil
 	},
