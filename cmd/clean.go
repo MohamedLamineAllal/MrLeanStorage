@@ -26,10 +26,17 @@ var cleanCmd = &cobra.Command{
 		c := cleaner.New(logger, cfg.DryRun)
 var allPaths []string
 var allCommands []string
+var commandNames []string
 
+sc := scheduler.New(logger)
 for _, t := range cfg.Targets {
 	if t.Command != "" {
-		allCommands = append(allCommands, t.Command)
+		if sc.ShouldRunCommand(t.Name, t.IntervalDays) {
+			allCommands = append(allCommands, t.Command)
+			commandNames = append(commandNames, t.Name)
+		} else {
+			logger.Info("Skipping command target (interval not met)", zap.String("name", t.Name))
+		}
 		continue
 	}
 
@@ -64,18 +71,19 @@ if len(allPaths) > 0 {
 	fmt.Printf("Clean Summary: Deleted %d files, freed %.2f MB\n", count, float64(size)/(1024*1024))
 }
 
-for _, cmd := range allCommands {
+for i, cmd := range allCommands {
 	err := c.ExecuteCommand(cmd)
-	if err != nil {
-		return err
+	if err == nil {
+		sc.UpdateCommandRunTime(commandNames[i])
 	}
 }
 
 fmt.Printf("Mode: %s\n", map[bool]string{true: "DRY RUN", false: "LIVE"}[cfg.DryRun])
 return nil
-	},
+},
 }
 
 func init() {
-	rootCmd.AddCommand(cleanCmd)
+rootCmd.AddCommand(cleanCmd)
 }
+

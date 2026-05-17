@@ -44,3 +44,6 @@ User: When running scan the configuration file when doesn't exist is not being c
 
 [2026-05-17]
 - Request: "Let's add the support of cleaning pnpm cache... normally the best way is to use pnpm store prune... if yes go and build it."
+
+[2026-05-18]
+- Request: "You didn't finish the work... how are you handling the execution of the scheduling and to not execute right away ..."

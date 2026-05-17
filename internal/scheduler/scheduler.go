@@ -30,6 +30,32 @@ func New(logger *zap.Logger) *Scheduler {
 	}
 }
 
+// ShouldRunCommand checks if the command has not been run within the interval
+func (s *Scheduler) ShouldRunCommand(commandName string, intervalDays int) bool {
+	if intervalDays <= 0 {
+		return true
+	}
+
+	statePath := filepath.Join(os.TempDir(), fmt.Sprintf("mls-cmd-%s.lastrun", commandName))
+	data, err := os.ReadFile(statePath)
+	if err != nil {
+		return true // Never run
+	}
+
+	lastRun, err := time.Parse(time.RFC3339, string(data))
+	if err != nil {
+		return true
+	}
+
+	return time.Since(lastRun) >= time.Duration(intervalDays)*24*time.Hour
+}
+
+// UpdateCommandRunTime saves the last run time for a command
+func (s *Scheduler) UpdateCommandRunTime(commandName string) {
+	statePath := filepath.Join(os.TempDir(), fmt.Sprintf("mls-cmd-%s.lastrun", commandName))
+	_ = os.WriteFile(statePath, []byte(time.Now().Format(time.RFC3339)), 0644)
+}
+
 // AddTask adds a task to the scheduler with a cron expression
 func (s *Scheduler) AddTask(spec string, task Task) error {
 	_, err := s.cron.AddFunc(spec, func() {
@@ -40,6 +66,7 @@ func (s *Scheduler) AddTask(spec string, task Task) error {
 	}
 	return nil
 }
+
 
 func (s *Scheduler) executeTask(task Task) {
 	s.logger.Info("Executing scheduled task")

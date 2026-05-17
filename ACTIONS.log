@@ -31,3 +31,8 @@
 - Updated cmd/clean.go to support command-based targets.
 - Documented new features in ARCHITECTURE.md, USER_GUIDE.md, and README.md.
 - Added unit tests for command execution.
+
+[2026-05-18]
+- Implemented command frequency tracking in internal/scheduler.
+- Updated cmd/clean.go to enforce intervals for command-based targets.
+- Documented the interval scheduling feature.

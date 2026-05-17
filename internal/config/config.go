@@ -21,6 +21,7 @@ type TargetConfig struct {
 	Name           string   `mapstructure:"name"`
 	Path           string   `mapstructure:"path"`
 	Threshold      int      `mapstructure:"threshold_days"`
+	IntervalDays   int      `mapstructure:"interval_days"`
 	SafetyLevel    int      `mapstructure:"safety_level"`
 	Type           string   `mapstructure:"type"` // "file", "folder", or "both"
 	Command        string   `mapstructure:"command"`
