@@ -1,2 +1,2 @@
 - Read AGENTS.md and Take all your instructions and context from AGENTS.md.
-- You should read AGENTS.md and make sure to follow it after every new Prompt. Not just once. To keep your context efficient.
+- You should read GEMINI.md and AGENTS.md and make sure to follow it after every new Prompt. Not just once. To keep your context efficient.

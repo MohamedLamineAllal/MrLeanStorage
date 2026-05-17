@@ -5,8 +5,11 @@ Make sure to read all the bellow and all instruction bellow. Make sure to adhere
 ## Instructions
 
 Bellow is the mode of operation that you need to follow. Make sure you don't miss any step.
+Make sure you respect for each prompt without exception.
 
 ### Agentic Workflow
+
+You should do this in each prompt without exception.
 
 - **Resumability**: At the start of every interaction, the agent MUST read `MEMORY.md` to understand the current phase, progress, and context. As well as git commits.
 - **Prompt Logging**: The agent MUST log every significant user prompt into `Prompts.log` to maintain a history of directives and intent.
@@ -15,7 +18,8 @@ Bellow is the mode of operation that you need to follow. Make sure you don't mis
 - **Incremental Updates**: Every significant step or decision must be recorded in `MEMORY.md`.
 - **Response Documentation**: When creating a substantial response, analysis, guide, recommendation, or decision-support note, write it as a Markdown file under `docs` using a clear well named subfolder structure and organization. Keep response files organized by topic, use descriptive filenames, and reference the created file in the final chat response.
 - **Git Integration**: All changes and actions should be committed with descriptive messages following conventional commits.
-- **Documentation**: Maintain and keep Project Documentation up to date. Document all functionalities, features, .... As well as all decisions, architecture choices, analysis and research.
+- **Documentation**: Maintain and keep Project Documentation up to date. Document all functionalities, features, .... As well as all decisions, architecture choices, analysis and research. And changes.
+- **Testing**: Build test for every features you make. And run tests after every change you make.
 
 ### Memory Logic
 
