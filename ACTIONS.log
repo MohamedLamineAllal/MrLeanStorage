@@ -44,3 +44,8 @@
 [2026-05-18]
 - Fixed missing scheduler import in cmd/clean.go.
 - Verified build success.
+
+[2026-05-18]
+- Fixed failing TestShouldRunCommand by ensuring the test state file is cleaned up before and after execution.
+- Added missing imports in internal/scheduler/scheduler_test.go.
+- Verified all tests pass.

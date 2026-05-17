@@ -53,3 +53,6 @@ User: When running scan the configuration file when doesn't exist is not being c
 
 [2026-05-18]
 - Request: "go build -o mls main.go... cmd/clean.go:31:7: undefined: scheduler"
+
+[2026-05-18]
+- Request: "Test failed... You should always run tests after you create them."

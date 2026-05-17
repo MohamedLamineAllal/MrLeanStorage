@@ -1,6 +1,9 @@
 package scheduler
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -35,6 +38,9 @@ func TestScheduler(t *testing.T) {
 func TestShouldRunCommand(t *testing.T) {
 	s := New(zap.NewNop())
 	commandName := "test-cmd"
+	statePath := filepath.Join(os.TempDir(), fmt.Sprintf("mls-cmd-%s.lastrun", commandName))
+	os.Remove(statePath) // Ensure clean state
+	defer os.Remove(statePath)
 	
 	// Test first run (should run)
 	assert.True(t, s.ShouldRunCommand(commandName, 30))
