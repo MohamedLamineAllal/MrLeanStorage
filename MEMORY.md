@@ -24,4 +24,5 @@ The project is currently in the **Development & Feature Refinement** phase. We h
 - **Glob Support**: Scanner now uses `filepath.Glob` to handle paths like `.../User Data/*/Cache`.
 - **Catch-up Logic**: Scheduler tracks last successful run via `~/.MacosLeanStorage.lastrun` and checks for execution on startup if the last run was > 23 hours ago.
 - **Safety First**: Dry-run mode remains the default for all cleanup operations.
-- **Ignore Mechanism**: Global and target-specific glob patterns for excluding files are pre-merged for high performance during scans.
+- **Recursive Globbing**: Enabled via `doublestar` library, allowing `**` patterns for deep directory recursion.
+

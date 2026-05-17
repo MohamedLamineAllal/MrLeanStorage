@@ -5,3 +5,10 @@
 - Updated default and extensive configuration examples to use wildcard globbing and "both" type.
 - Refactored directory walking in scanner.go to be more efficient and added logging levels to suppress expected traversal errors.
 - Documented new ignore pattern feature in ARCHITECTURE.md.
+
+[2026-05-17]
+- Investigated filepath.Glob limitations regarding recursive globbing (**).
+- Integrated github.com/bmatcuk/doublestar/v4 to enable recursive globbing support.
+- Updated internal/scanner/scanner.go to use doublestar.FilepathGlob.
+- Verified changes with tests.
+- Updated documentation and logs to fulfill compliance mandates.

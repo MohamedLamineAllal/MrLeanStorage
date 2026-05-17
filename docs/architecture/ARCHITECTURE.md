@@ -29,6 +29,8 @@ Build a high-performance, safe, and efficient storage cleanup tool for macOS, fo
 
 ### Exclusion/Ignore Mechanism
 * **Ignore Patterns**: A flexible system to ignore files or folders based on user-provided glob patterns (e.g., `.DS_Store`). This is configurable both globally and per-target, and is integrated into both file walking and deep staleness checks for high performance.
+* **Recursive Globbing**: Supports the `**` recursive wildcard pattern (e.g., `**/Cache/**`) via `doublestar` to allow for deep path resolution within complex directory structures.
+
 
 
 ## 4. Library Choices

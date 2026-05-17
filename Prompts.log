@@ -1,0 +1,34 @@
+---
+TIMESTAMP: 2026-05-16T14:30:00Z
+PROMPT: Please Create .gitignore file, prep the base for golang code, write docs where you analyze and decide how we approach the problem. What are all important type of files and folders that are safe to remove and generally consume a lot of storage. IN places like Arc, vscode, where there is multiple profiles ... How to make sure we do it for the different profiles. If we use time as a metric what is the best logic for what we should remove from cache and what not. What are all directory that are 100% safe to remove and with what time constraint to make sure it's safe. Anything that help us with such logic. Document everything Also Write a doc where you Plan the Go Lang folder structure, design choices, Optmizations, libraries choices, what to pick for files and directory listening, what about cron job like of checkin. What are just the best decision for such kind of a tool, where we focus on performance and efficiency + safety Commit init project and commit after you finish. Install also all go lang tools. Same for vscode extensions. Include all in .vscode.
+---
+TIMESTAMP: 2026-05-16T14:45:00Z
+PROMPT: i want to use AGENTS.md instead, can you setup .gemini/settings.json to use that and read @GEMINI.md and cross check with @AGENTS.md  and update AGENTS.md and remove GEMINI.md and then refresh the session then Check AGENTS.md instruction apply them and check all that was done this far. As the agent did execute a prompt i gave him but didn't read AGENTS.md  and hence didn't manage things as i wanted. Check the prompt that was used before this. Correct what need to be correct and do what wasn't done that need to be done.
+---
+---
+TIMESTAMP: 2026-05-16T15:00:00Z
+PROMPT: i reviewed the proposal and agree with analysis
+please go and build the implementation
+For command line make the necessary commands and functin
+Add a command to open the configuration file in Finder
+Please also write tests and run them to see if all is working perfectly
+Build one thing and commit and so on
+When you test create a report of all testing
+Document everything
+Create an end user Documentation
+Take your time, take as many steps as needed. Until you finish
+Also please define code style
+and configure a linter
+---
+TIMESTAMP: 2026-05-16T15:30:00Z
+PROMPT: You didn't respect @AGENTS.md isntruction > you didn't update MEMORY.md and didn't add my prompt to Prompts.log. Please update those. Otherwise good work.
+also make sure AGENTS.md is configured so that gemini can use it. We did create .gemini/settings.json please verify that
+---
+2026-05-17: Also very bad logging, Improve the logging to be human readable, clean CLI tool for this session.
+2026-05-17: You weren't respecting AGENTS.md, i just added GEMINI.md that instruct to read AGENTS.md and follow the instruction there. See if we need or not to update .gemini/settings.md. Otherwise read AGENTS.md and correct the things that should have been done, updating MEMORY.md, prompts.log, and commiting the changes. Make sure to do it right.
+May 17, 2026 - User Prompt: Please for the scheduler i want if at midnight the computer is off (and if a schedule is missed) the next wake up when computer on, the missed scheduled task should all be run.
+May 17, 2026 - User Prompt: Please for the scheduler i want if at midnight the computer is off (and if a schedule is missed) the next wake up when computer on, the missed scheduled task should all be run. ... (subsequent requests for compliance and commit)
+User: When running scan the configuration file when doesn't exist is not being created automatically. Please fix that and add a test about this
+
+[2026-05-17]
+- Request: "Can you confirm for me if this syntax is supported or not... If not supported support it. Analyze my question as well."
