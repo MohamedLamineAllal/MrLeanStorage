@@ -73,3 +73,7 @@
 
 [2026-05-18]
 - Verified scan functionality. The logic is now consolidated in TargetProcessor.Run and properly handles display of command-based targets.
+
+[2026-05-18]
+- Fixed TestExecuteCommand in internal/cleaner/cleaner_test.go by restoring SetDryRun method in internal/cleaner/cleaner.go.
+- Verified all tests pass.

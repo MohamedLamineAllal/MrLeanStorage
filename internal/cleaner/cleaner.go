@@ -74,6 +74,11 @@ func (c *Cleaner) ExecuteCommand(command string) error {
 	return nil
 }
 
+// SetDryRun toggles the dry run mode
+func (c *Cleaner) SetDryRun(dryRun bool) {
+	c.dryRun = dryRun
+}
+
 // DryRun returns the current dry run mode
 func (c *Cleaner) DryRun() bool {
 	return c.dryRun
