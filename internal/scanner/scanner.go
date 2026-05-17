@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bmatcuk/doublestar/v4"
 	"go.uber.org/zap"
 )
 
@@ -62,7 +63,7 @@ func (s *Scanner) Scan(target Target, targetIgnorePatterns []string) (*Result, e
 		return nil, fmt.Errorf("failed to expand path %s: %w", target.Path, err)
 	}
 
-	paths, err := filepath.Glob(expandedPath)
+	paths, err := doublestar.FilepathGlob(expandedPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to glob path %s: %w", expandedPath, err)
 	}
