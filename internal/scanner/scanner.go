@@ -74,7 +74,7 @@ func (s *Scanner) Scan(target Target) (*Result, error) {
 			continue // If we match the folder, we don't scan inside it for files in "folder" mode
 		}
 
-		if target.Type == "file" || target.Type == "both" {
+		if target.Type == "file" || target.Type == "both" || target.Type == "" {
 			err = s.walkFiles(p, target.Threshold, &result.Files, &result.TotalSize, now)
 			if err != nil {
 				s.logger.Warn("Failed to walk files", zap.String("path", p), zap.Error(err))

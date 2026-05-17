@@ -34,6 +34,7 @@ func TestScan(t *testing.T) {
 		Name:      "Test Target",
 		Path:      tempDir,
 		Threshold: 7 * 24 * time.Hour,
+		Type:      "file",
 	}
 
 	result, err := s.Scan(target)
@@ -87,6 +88,7 @@ func TestScan_Glob(t *testing.T) {
 		Name:      "Glob Test",
 		Path:      filepath.Join(tempDir, "*", "Cache"),
 		Threshold: 7 * 24 * time.Hour,
+		Type:      "file",
 	}
 
 	result, err := s.Scan(target)
@@ -94,4 +96,40 @@ func TestScan_Glob(t *testing.T) {
 	assert.Len(t, result.Files, 2)
 	assert.Contains(t, result.Files, oldFile1)
 	assert.Contains(t, result.Files, oldFile2)
+}
+
+func TestScan_Folder(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "mls-folder-test")
+	assert.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+
+	// Create a subfolder with files
+	cacheDir := filepath.Join(tempDir, "Cache")
+	err = os.MkdirAll(cacheDir, 0755)
+	assert.NoError(t, err)
+
+	oldFile := filepath.Join(cacheDir, "old.txt")
+	err = os.WriteFile(oldFile, []byte("old content"), 0644)
+	assert.NoError(t, err)
+
+	// Set both folder and file modification time to 10 days ago
+	oldTime := time.Now().Add(-10 * 24 * time.Hour)
+	err = os.Chtimes(oldFile, oldTime, oldTime)
+	assert.NoError(t, err)
+	err = os.Chtimes(cacheDir, oldTime, oldTime)
+	assert.NoError(t, err)
+
+	s := New(zap.NewNop())
+	target := Target{
+		Name:      "Folder Test",
+		Path:      cacheDir,
+		Threshold: 7 * 24 * time.Hour,
+		Type:      "folder",
+	}
+
+	result, err := s.Scan(target)
+	assert.NoError(t, err)
+	assert.Len(t, result.Files, 1)
+	assert.Equal(t, cacheDir, result.Files[0])
+	assert.Equal(t, int64(len("old content")), result.TotalSize)
 }
