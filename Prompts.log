@@ -59,3 +59,6 @@ User: When running scan the configuration file when doesn't exist is not being c
 
 [2026-05-18]
 - Request: "You didn't update scan.go to account for new command feature. You should update it, to know to skip command from normal scan."
+
+[2026-05-18]
+- Request: "hmm u didnt commit, no tests no docs ... (in scan output context)"

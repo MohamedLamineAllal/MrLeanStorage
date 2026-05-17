@@ -24,7 +24,11 @@ mls config open
 ## Commands
 
 ### `scan`
-The `scan` command analyzes all configured targets and lists items that exceed the `threshold_days`. It does not delete anything. Use this to see what `mls` has found.
+The `scan` command analyzes configured targets and lists files that match cleanup criteria.
+
+**Output Information**:
+- For path-based targets, it displays matched files and the total size that would be cleaned.
+- For command-based targets, it displays the command to be executed, the configured interval, and the scheduled "Next Run" time.
 
 ```bash
 mls scan

@@ -53,3 +53,6 @@
 [2026-05-18]
 - Updated cmd/scan.go to ignore command-based targets during scan operations.
 - Verified that mls scan no longer attempts to scan command targets.
+
+[2026-05-18]
+- Documented enhanced scan output in docs/USER_GUIDE.md.
