@@ -1,0 +1,7 @@
+[2026-05-17]
+- Initialized ACTIONS.log and Prompts.log to ensure compliance with project mandates.
+- Investigated OneNote backup matching issue; identified that recent .DS_Store files prevented staleness marking.
+- Implemented global/target-specific ignore patterns in config and scanner.
+- Updated default and extensive configuration examples to use wildcard globbing and "both" type.
+- Refactored directory walking in scanner.go to be more efficient and added logging levels to suppress expected traversal errors.
+- Documented new ignore pattern feature in ARCHITECTURE.md.

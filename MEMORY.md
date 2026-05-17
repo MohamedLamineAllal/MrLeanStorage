@@ -12,7 +12,8 @@ The project is currently in the **Development & Feature Refinement** phase. We h
 - **Config CLI**: Enhanced config management with `mls config open` (default app) and `mls config reveal` (Finder).
 - **Scheduler**: Implemented a periodic task scheduler with persistent last-run state tracking.
 - **Cleanup Inventory**: Populated configuration with the full list of safe cleanup targets.
-- **Compliance**: Restored architectural compliance to `AGENTS.md` mandates, including `Prompts.log` enforcement.
+- **Ignore Patterns**: Implemented a performant glob-based ignore system (global and target-specific) to exclude macOS metadata. Optimized directory walking to avoid unnecessary errors and refactored logging.
+- **Compliance**: Restored architectural compliance to `AGENTS.md` mandates, including `Prompts.log` and `ACTIONS.log` enforcement.
 
 ## Pending Tasks
 - Add more robust error handling and telemetry (Zap).
@@ -23,3 +24,4 @@ The project is currently in the **Development & Feature Refinement** phase. We h
 - **Glob Support**: Scanner now uses `filepath.Glob` to handle paths like `.../User Data/*/Cache`.
 - **Catch-up Logic**: Scheduler tracks last successful run via `~/.MacosLeanStorage.lastrun` and checks for execution on startup if the last run was > 23 hours ago.
 - **Safety First**: Dry-run mode remains the default for all cleanup operations.
+- **Ignore Mechanism**: Global and target-specific glob patterns for excluding files are pre-merged for high performance during scans.
