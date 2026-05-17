@@ -61,6 +61,7 @@ var cleanCmd = &cobra.Command{
 		} else {
 			fmt.Printf("\nClean Summary: Deleted %d files, freed %.2f MB\n", count, float64(size)/(1024*1024))
 		}
+		fmt.Printf("Mode: %s\n", map[bool]string{true: "DRY RUN", false: "LIVE"}[cfg.DryRun])
 
 		return nil
 	},

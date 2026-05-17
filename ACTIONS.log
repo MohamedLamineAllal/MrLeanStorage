@@ -21,3 +21,6 @@
 
 [2026-05-17]
 - Updated docs/USER_GUIDE.md to clarify the --dry-run=false command line flag.
+
+[2026-05-17]
+- Updated cmd/clean.go to output the mode (DRY RUN or LIVE) in the final line of the cleanup summary.
