@@ -10,6 +10,7 @@ Bellow is the mode of operation that you need to follow. Make sure you don't mis
 
 - **Resumability**: At the start of every interaction, the agent MUST read `MEMORY.md` to understand the current phase, progress, and context. As well as git commits.
 - **Prompt Logging**: The agent MUST log every significant user prompt into `Prompts.log` to maintain a history of directives and intent.
+- **Log done actions**: For every action you do, log it down to `ACTIONS.log`. That would help me and any other dev to see what was done by the AI. As a full history. Not to be read and used by the Agent. Unless there an issue (commits, prompts, MEMORY not done, logged synced forgotten), and that would help.
 - **Contextual Awareness**: The agent should always reference `MEMORY.md` before proposing new actions to ensure continuity.
 - **Incremental Updates**: Every significant step or decision must be recorded in `MEMORY.md`.
 - **Response Documentation**: When creating a substantial response, analysis, guide, recommendation, or decision-support note, write it as a Markdown file under `docs` using a clear well named subfolder structure and organization. Keep response files organized by topic, use descriptive filenames, and reference the created file in the final chat response.
