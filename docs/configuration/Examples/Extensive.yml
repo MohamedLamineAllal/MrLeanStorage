@@ -69,5 +69,10 @@ targets:
     threshold_days: 14
     safety_level: 1
     type: "folder"
+  - name: "Microsoft OneNote notes backup"
+    path: "~/Library/Containers/com.microsoft.onenote.mac/Data/Library/Application Support/Microsoft User Data/OneNote/*/Backup"
+    threshold_days: 30
+    safety_level: 1
+    type: "folder"
 dry_run: true
 schedule: "0 0 * * *" # Daily at midnight

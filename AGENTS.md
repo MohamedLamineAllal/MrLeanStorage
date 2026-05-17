@@ -31,7 +31,8 @@ Bellow is the mode of operation that you need to follow. Make sure you don't mis
 - Take as many steps and time to do things the right way and at the highest level.
 
 ### Make sure
-- Make sure you don't miss anything from the mode of operation above.
+- Make sure you don't miss anything from the mode of operation above and bellow.
+- Make sure to update docs/configuration/examples/default.yml when you update the default configuration, it should always be kept up to date.
 
 ## Project Description
 High-performance, safe, and efficient storage cleanup tool for macOS.
