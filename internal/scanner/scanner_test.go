@@ -56,3 +56,17 @@ func TestExpandPath(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, absPath, path)
 }
+
+func TestScan_NonExistentPath(t *testing.T) {
+	s := New(zap.NewNop())
+	target := Target{
+		Name:      "Non Existent",
+		Path:      "/tmp/this-directory-definitely-does-not-exist-123456789",
+		Threshold: 7 * 24 * time.Hour,
+	}
+
+	result, err := s.Scan(target)
+	assert.NoError(t, err)
+	assert.Equal(t, "Non Existent", result.TargetName)
+	assert.Len(t, result.Files, 0)
+}

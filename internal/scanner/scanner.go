@@ -42,10 +42,10 @@ func (s *Scanner) Scan(target Target) (*Result, error) {
 		return nil, fmt.Errorf("failed to expand path %s: %w", target.Path, err)
 	}
 
-	s.logger.Info("Scanning target", 
-		zap.String("name", target.Name), 
-		zap.String("path", expandedPath),
-		zap.Duration("threshold", target.Threshold))
+	// Check if directory exists
+	if _, err := os.Stat(expandedPath); os.IsNotExist(err) {
+		return &Result{TargetName: target.Name, Files: []string{}}, nil
+	}
 
 	result := &Result{
 		TargetName: target.Name,
@@ -57,7 +57,6 @@ func (s *Scanner) Scan(target Target) (*Result, error) {
 	err = filepath.Walk(expandedPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			if os.IsPermission(err) {
-				s.logger.Warn("Permission denied", zap.String("path", path))
 				return nil
 			}
 			return err

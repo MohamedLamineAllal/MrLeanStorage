@@ -1,1 +1,5 @@
-{"project_instruction_file": "AGENTS.md"}
+{
+  "context": {
+    "fileName": ["AGENTS.md", "GEMINI.md"]
+  }
+}
