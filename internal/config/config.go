@@ -21,6 +21,7 @@ type TargetConfig struct {
 	Path        string `mapstructure:"path"`
 	Threshold   int    `mapstructure:"threshold_days"`
 	SafetyLevel int    `mapstructure:"safety_level"`
+	Type        string `mapstructure:"type"` // "file", "folder", or "both"
 }
 
 // Load reads the configuration from viper
@@ -29,6 +30,14 @@ func Load() (*Config, error) {
 	if err := viper.Unmarshal(&cfg); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
+
+	// Default Type to "file" if not specified
+	for i := range cfg.Targets {
+		if cfg.Targets[i].Type == "" {
+			cfg.Targets[i].Type = "file"
+		}
+	}
+
 	return &cfg, nil
 }
 
@@ -58,58 +67,72 @@ func CreateDefaultConfig(path string) error {
     path: "~/Library/Application Support/Arc/User Data/*/Cache"
     threshold_days: 3
     safety_level: 1
+    type: "folder"
   - name: "Chrome Global Cache"
     path: "~/Library/Caches/Google/Chrome"
     threshold_days: 3
     safety_level: 1
+    type: "file"
   - name: "Discord Cache"
     path: "~/Library/Application Support/discord/Cache"
     threshold_days: 3
     safety_level: 1
+    type: "file"
   - name: "Cursor CachedData"
     path: "~/Library/Application Support/Cursor/CachedData"
     threshold_days: 3
     safety_level: 1
+    type: "folder"
   - name: "VSCode CachedData"
     path: "~/Library/Application Support/Code/CachedData"
     threshold_days: 3
     safety_level: 1
+    type: "folder"
   - name: "VSCode Workspace Storage"
     path: "~/Library/Application Support/Code/User/workspaceStorage"
     threshold_days: 7
     safety_level: 2
+    type: "folder"
   - name: "OpenAI Atlas Cache"
     path: "~/Library/Caches/com.openai.atlas"
     threshold_days: 3
     safety_level: 1
+    type: "file"
   - name: "Telegram Cache"
     path: "~/Library/Caches/ru.keepcoder.Telegram"
     threshold_days: 3
     safety_level: 1
+    type: "file"
   - name: "Figma Local Storage"
     path: "~/Library/Application Support/Figma/Local Storage"
     threshold_days: 3
     safety_level: 1
+    type: "folder"
   - name: "Spotify Cache"
     path: "~/Library/Caches/com.spotify.client"
     threshold_days: 3
     safety_level: 1
+    type: "file"
   - name: "Go Build Cache"
     path: "~/Library/Caches/go-build"
     threshold_days: 7
     safety_level: 1
+    type: "folder"
   - name: "Homebrew Cache"
     path: "~/Library/Caches/Homebrew"
     threshold_days: 14
     safety_level: 1
+    type: "folder"
   - name: "npm/node-gyp"
     path: "~/Library/Caches/node-gyp"
     threshold_days: 14
     safety_level: 1
+    type: "folder"
   - name: "pip/pnpm Cache"
     path: "~/Library/Caches/pip"
     threshold_days: 14
     safety_level: 1
+    type: "folder"
 dry_run: true
 schedule: "0 0 * * *" # Daily at midnight
 `

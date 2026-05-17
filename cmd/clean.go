@@ -33,6 +33,7 @@ var cleanCmd = &cobra.Command{
 				Path:        t.Path,
 				Threshold:   time.Duration(t.Threshold) * 24 * time.Hour,
 				SafetyLevel: t.SafetyLevel,
+				Type:        t.Type,
 			}
 
 			result, err := s.Scan(target)

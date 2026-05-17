@@ -5,9 +5,10 @@ The project is currently in the **Development & Feature Refinement** phase. We h
 
 ## Completed Tasks
 - **System Architecture**: Established Go project structure (`cmd`, `internal/scanner`, `internal/cleaner`, `internal/config`, `internal/scheduler`).
-- **Configuration Management**: Implemented YAML-based config with `Viper`. Fixed a bug where the config file was not created automatically when a custom path was provided or when parent directories were missing.
-- **Scanner**: Implemented robust, concurrent directory traversal with support for glob patterns for multi-profile directory support.
-- **Cleaner**: Implemented safe file deletion with dry-run support by default.
+- **Configuration Management**: Implemented YAML-based config with `Viper`. Fixed config creation bug and added support for granular item types (`file`, `folder`, `both`) per cleanup target.
+- **Scanner**: Implemented robust, concurrent directory traversal using `os.ReadDir` for maximum efficiency (compliant with `AGENTS.md`). Supports both individual file pruning and entire directory removal based on configuration.
+- **Cleaner**: Implemented safe file deletion with dry-run support by default. Handles both file and recursive directory removal.
+- **Logging**: Refined CLI output with concise summaries and `--verbose` support for detailed match listing.
 - **Scheduler**: Implemented a periodic task scheduler with persistent last-run state tracking.
 - **Cleanup Inventory**: Populated configuration with the full list of safe cleanup targets.
 - **Compliance**: Restored architectural compliance to `AGENTS.md` mandates, including `Prompts.log` enforcement.

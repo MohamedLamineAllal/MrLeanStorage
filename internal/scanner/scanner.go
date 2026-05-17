@@ -16,6 +16,7 @@ type Target struct {
 	Path        string
 	Threshold   time.Duration
 	SafetyLevel int
+	Type        string // "file", "folder", or "both"
 }
 
 // Result contains information about a scanned target
@@ -55,37 +56,88 @@ func (s *Scanner) Scan(target Target) (*Result, error) {
 	now := time.Now()
 
 	for _, p := range paths {
-		err = filepath.Walk(p, func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				if os.IsPermission(err) {
-					return nil
-				}
-				return err
-			}
-
-			// Skip the root path itself
-			if path == p {
-				return nil
-			}
-
-			// If it's a directory, we might want to clean it if it's old enough,
-			// but usually we clean files. For simplicity, we'll list files.
-			if !info.IsDir() {
-				if now.Sub(info.ModTime()) > target.Threshold {
-					result.Files = append(result.Files, path)
-					result.TotalSize += info.Size()
-				}
-			}
-
-			return nil
-		})
-
+		info, err := os.Stat(p)
 		if err != nil {
-			s.logger.Warn("Partial walk failed", zap.String("path", p), zap.Error(err))
+			s.logger.Warn("Failed to stat glob match", zap.String("path", p), zap.Error(err))
+			continue
+		}
+
+		if (target.Type == "folder" || target.Type == "both") && info.IsDir() {
+			if now.Sub(info.ModTime()) > target.Threshold {
+				size, err := s.getDirSize(p)
+				if err != nil {
+					s.logger.Warn("Failed to calculate directory size", zap.String("path", p), zap.Error(err))
+				}
+				result.Files = append(result.Files, p)
+				result.TotalSize += size
+			}
+			continue // If we match the folder, we don't scan inside it for files in "folder" mode
+		}
+
+		if target.Type == "file" || target.Type == "both" {
+			err = s.walkFiles(p, target.Threshold, &result.Files, &result.TotalSize, now)
+			if err != nil {
+				s.logger.Warn("Failed to walk files", zap.String("path", p), zap.Error(err))
+			}
 		}
 	}
 
 	return result, nil
+}
+
+func (s *Scanner) walkFiles(path string, threshold time.Duration, matches *[]string, totalSize *int64, now time.Time) error {
+	entries, err := os.ReadDir(path)
+	if err != nil {
+		if os.IsPermission(err) {
+			return nil
+		}
+		return err
+	}
+
+	for _, entry := range entries {
+		fullPath := filepath.Join(path, entry.Name())
+		info, err := entry.Info()
+		if err != nil {
+			continue
+		}
+
+		if entry.IsDir() {
+			if err := s.walkFiles(fullPath, threshold, matches, totalSize, now); err != nil {
+				s.logger.Debug("Subdirectory walk failed", zap.String("path", fullPath), zap.Error(err))
+			}
+		} else {
+			if now.Sub(info.ModTime()) > threshold {
+				*matches = append(*matches, fullPath)
+				*totalSize += info.Size()
+			}
+		}
+	}
+	return nil
+}
+
+func (s *Scanner) getDirSize(path string) (int64, error) {
+	var size int64
+	entries, err := os.ReadDir(path)
+	if err != nil {
+		return 0, err
+	}
+
+	for _, entry := range entries {
+		info, err := entry.Info()
+		if err != nil {
+			continue
+		}
+
+		if entry.IsDir() {
+			subSize, err := s.getDirSize(filepath.Join(path, entry.Name()))
+			if err == nil {
+				size += subSize
+			}
+		} else {
+			size += info.Size()
+		}
+	}
+	return size, nil
 }
 
 func expandPath(path string) (string, error) {
