@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/mohamedlamineallal/MacosLeanStorage/internal/cleaner"
@@ -26,7 +27,15 @@ func NewTargetProcessor(logger *zap.Logger, ignorePatterns []string, dryRun bool
 	}
 }
 
-func (tp *TargetProcessor) ProcessTargets(targets []config.TargetConfig) ([]string, []string, []string, int64, error) {
+// Result holds the findings of a scan
+type Result struct {
+	Paths    []string
+	Commands []string
+	Names    []string
+	Size     int64
+}
+
+func (tp *TargetProcessor) Run(targets []config.TargetConfig, isClean bool) error {
 	var allPaths []string
 	var allCommands []string
 	var commandNames []string
@@ -57,9 +66,43 @@ func (tp *TargetProcessor) ProcessTargets(targets []config.TargetConfig) ([]stri
 			continue
 		}
 
+		// Print scan details for both commands
+		fmt.Printf("\nTarget: %s (%s, type: %s)\n", result.TargetName, t.Path, t.Type)
+		if len(result.Files) == 0 {
+			fmt.Println("  No files match cleanup criteria.")
+		} else {
+			for _, file := range result.Files {
+				fmt.Printf("  [MATCH] %s\n", file)
+			}
+			fmt.Printf("  Total size: %.2f MB\n", float64(result.TotalSize)/(1024*1024))
+		}
+
 		allPaths = append(allPaths, result.Files...)
 		totalSize += result.TotalSize
 	}
 
-	return allPaths, allCommands, commandNames, totalSize, nil
+	if !isClean {
+		fmt.Printf("\nSummary: Found %d files, total size: %.2f MB, %d commands scheduled\n", len(allPaths), float64(totalSize)/(1024*1024), len(allCommands))
+		return nil
+	}
+
+	// Perform cleaning
+	if len(allPaths) > 0 {
+		fmt.Printf("Cleaning %d files...\n", len(allPaths))
+		count, size, err := tp.cleaner.Clean(allPaths)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("Clean Summary: Deleted %d files, freed %.2f MB\n", count, float64(size)/(1024*1024))
+	}
+
+	for i, cmd := range allCommands {
+		err := tp.cleaner.ExecuteCommand(cmd)
+		if err == nil {
+			tp.scheduler.UpdateCommandRunTime(commandNames[i])
+		}
+	}
+
+	fmt.Printf("Mode: %s\n", map[bool]string{true: "DRY RUN", false: "LIVE"}[tp.cleaner.DryRun()])
+	return nil
 }

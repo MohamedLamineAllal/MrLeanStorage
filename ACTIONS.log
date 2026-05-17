@@ -70,3 +70,6 @@
 [2026-05-18]
 - Added test coverage for cmd/processor.go.
 - Staged and committed all pending changes for cmd/scan.go, cmd/clean.go, and cmd/processor.go.
+
+[2026-05-18]
+- Verified scan functionality. The logic is now consolidated in TargetProcessor.Run and properly handles display of command-based targets.
