@@ -93,7 +93,7 @@ A list of directories to monitor or commands to execute.
 - `name`: A descriptive name for the target.
 - `path`: The absolute path or a home-relative path (using `~/`).
 - `command`: A system command to run (e.g., `pnpm store prune`).
-- `interval_days`: Minimum days to wait before running this command again.
+- `interval_days`: Minimum days to wait before running this command again. `mls` tracks the last execution time in a file in the system temporary directory (e.g., `/tmp/mls-cmd-<name>.lastrun`).
 - `threshold_days`: Items older than this many days will be targeted for cleanup.
 - `type`: Defines how the target should be cleaned. Available values:
     - `"file"` (default): Scans inside the path and deletes individual old files.

@@ -66,7 +66,7 @@ dry_run: true
 ### Configuration Patterns
 - The tool supports standard file globbing.
 - **Recursive Globbing**: Use the `**` pattern to match directories recursively (e.g., `~/Library/Application Support/MyApp/**/Cache/*`). This is powered by the `doublestar` library.
-- **Command-based Cleanup**: Define a `command` field in your target (e.g., `command: "pnpm store prune"`) to run system-level cleanup tasks.
+- **Command-based Cleanup**: Define a `command` field in your target (e.g., `command: "pnpm store prune"`) to run system-level cleanup tasks. `mls` persists the last run time in the system temporary directory and respects the `interval_days` setting to avoid frequent execution.
 
 
 ## Testing

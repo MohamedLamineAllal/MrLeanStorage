@@ -63,3 +63,6 @@
 [2026-05-18]
 - Explained command-based target persistence mechanism.
 - Documented the logic in ARCHITECTURE.md, USER_GUIDE.md, and README.md.
+
+[2026-05-18]
+- Updated documentation to include technical details of command-scheduling persistence (lastrun files in /tmp).

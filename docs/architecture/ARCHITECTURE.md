@@ -31,6 +31,7 @@ Build a high-performance, safe, and efficient storage cleanup tool for macOS, fo
 * **Ignore Patterns**: A flexible system to ignore files or folders based on user-provided glob patterns (e.g., `.DS_Store`). This is configurable both globally and per-target, and is integrated into both file walking and deep staleness checks for high performance.
 * **Recursive Globbing**: Supports the `**` recursive wildcard pattern (e.g., `**/Cache/**`) via `doublestar` to allow for deep path resolution within complex directory structures.
 * **Command-based Cleanup**: Allows for execution of pre-defined system commands (e.g., `pnpm store prune`) to supplement file-based cleanup tasks. Commands are executed during the `clean` phase, respecting the global dry-run mode and an optional `interval_days` property to avoid frequent, unnecessary execution.
+    * **Persistence**: The last execution time of a command target is persisted in the system temporary directory as a file named `mls-cmd-<target_name>.lastrun`. The scheduler checks this timestamp against `interval_days` before deciding whether to execute the command.
 
 
 
