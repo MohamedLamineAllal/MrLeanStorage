@@ -40,7 +40,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.MacosLeanStorage.yaml)")
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Enable verbose logging")
 	rootCmd.PersistentFlags().BoolVar(&dryRun, "dry-run", true, "Enable dry-run mode (no files deleted)")
-	
+
 	viper.BindPFlag("dry_run", rootCmd.PersistentFlags().Lookup("dry-run"))
 }
 

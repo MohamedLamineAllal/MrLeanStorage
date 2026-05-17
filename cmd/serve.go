@@ -30,10 +30,10 @@ var serveCmd = &cobra.Command{
 		}
 
 		s := scheduler.New(logger)
-		
+
 		task := func() error {
 			logger.Info("Starting scheduled cleanup")
-			
+
 			sc := scanner.New(logger)
 			cl := cleaner.New(logger, cfg.DryRun)
 
@@ -67,6 +67,7 @@ var serveCmd = &cobra.Command{
 			return err
 		}
 
+		s.CheckForMissedTasks(task)
 		s.Start()
 		defer s.Stop()
 

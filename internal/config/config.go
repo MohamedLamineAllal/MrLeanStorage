@@ -48,6 +48,22 @@ func CreateDefaultConfig(path string) error {
 	}
 
 	defaultConfig := `targets:
+  - name: "Arc Cache"
+    path: "~/Library/Application Support/Arc/User Data/*/Cache"
+    threshold_days: 3
+    safety_level: 1
+  - name: "Chrome Global Cache"
+    path: "~/Library/Caches/Google/Chrome"
+    threshold_days: 3
+    safety_level: 1
+  - name: "Discord Cache"
+    path: "~/Library/Application Support/discord/Cache"
+    threshold_days: 3
+    safety_level: 1
+  - name: "Cursor CachedData"
+    path: "~/Library/Application Support/Cursor/CachedData"
+    threshold_days: 3
+    safety_level: 1
   - name: "VSCode CachedData"
     path: "~/Library/Application Support/Code/CachedData"
     threshold_days: 3
@@ -56,16 +72,20 @@ func CreateDefaultConfig(path string) error {
     path: "~/Library/Application Support/Code/User/workspaceStorage"
     threshold_days: 7
     safety_level: 2
-  - name: "Chrome Global Cache"
-    path: "~/Library/Caches/Google/Chrome"
-    threshold_days: 7
-    safety_level: 1
-  - name: "Discord Cache"
-    path: "~/Library/Application Support/discord/Cache"
-    threshold_days: 3
-    safety_level: 1
   - name: "OpenAI Atlas Cache"
     path: "~/Library/Caches/com.openai.atlas"
+    threshold_days: 3
+    safety_level: 1
+  - name: "Telegram Cache"
+    path: "~/Library/Caches/ru.keepcoder.Telegram"
+    threshold_days: 3
+    safety_level: 1
+  - name: "Figma Local Storage"
+    path: "~/Library/Application Support/Figma/Local Storage"
+    threshold_days: 3
+    safety_level: 1
+  - name: "Spotify Cache"
+    path: "~/Library/Caches/com.spotify.client"
     threshold_days: 3
     safety_level: 1
   - name: "Go Build Cache"
@@ -74,6 +94,14 @@ func CreateDefaultConfig(path string) error {
     safety_level: 1
   - name: "Homebrew Cache"
     path: "~/Library/Caches/Homebrew"
+    threshold_days: 14
+    safety_level: 1
+  - name: "npm/node-gyp"
+    path: "~/Library/Caches/node-gyp"
+    threshold_days: 14
+    safety_level: 1
+  - name: "pip/pnpm Cache"
+    path: "~/Library/Caches/pip"
     threshold_days: 14
     safety_level: 1
 dry_run: true

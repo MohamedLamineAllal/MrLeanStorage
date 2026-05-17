@@ -10,7 +10,7 @@ import (
 
 func TestScheduler(t *testing.T) {
 	s := New(zap.NewNop())
-	
+
 	executed := make(chan bool, 1)
 	task := func() error {
 		executed <- true

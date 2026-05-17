@@ -57,16 +57,41 @@ func TestExpandPath(t *testing.T) {
 	assert.Equal(t, absPath, path)
 }
 
-func TestScan_NonExistentPath(t *testing.T) {
+func TestScan_Glob(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "mls-glob-test")
+	assert.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+
+	// Create structure: tempDir/profile1/Cache/old.txt and tempDir/profile2/Cache/old.txt
+	profile1Cache := filepath.Join(tempDir, "profile1", "Cache")
+	profile2Cache := filepath.Join(tempDir, "profile2", "Cache")
+	err = os.MkdirAll(profile1Cache, 0755)
+	assert.NoError(t, err)
+	err = os.MkdirAll(profile2Cache, 0755)
+	assert.NoError(t, err)
+
+	oldFile1 := filepath.Join(profile1Cache, "old.txt")
+	oldFile2 := filepath.Join(profile2Cache, "old.txt")
+
+	err = os.WriteFile(oldFile1, []byte("old content"), 0644)
+	assert.NoError(t, err)
+	err = os.WriteFile(oldFile2, []byte("old content"), 0644)
+	assert.NoError(t, err)
+
+	oldTime := time.Now().Add(-10 * 24 * time.Hour)
+	os.Chtimes(oldFile1, oldTime, oldTime)
+	os.Chtimes(oldFile2, oldTime, oldTime)
+
 	s := New(zap.NewNop())
 	target := Target{
-		Name:      "Non Existent",
-		Path:      "/tmp/this-directory-definitely-does-not-exist-123456789",
+		Name:      "Glob Test",
+		Path:      filepath.Join(tempDir, "*", "Cache"),
 		Threshold: 7 * 24 * time.Hour,
 	}
 
 	result, err := s.Scan(target)
 	assert.NoError(t, err)
-	assert.Equal(t, "Non Existent", result.TargetName)
-	assert.Len(t, result.Files, 0)
+	assert.Len(t, result.Files, 2)
+	assert.Contains(t, result.Files, oldFile1)
+	assert.Contains(t, result.Files, oldFile2)
 }

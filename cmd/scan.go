@@ -22,7 +22,7 @@ var scanCmd = &cobra.Command{
 		}
 
 		s := scanner.New(logger)
-		
+
 		totalFiles := 0
 		var totalSize int64
 
@@ -50,7 +50,7 @@ var scanCmd = &cobra.Command{
 				fmt.Printf("  [MATCH] %s\n", file)
 			}
 			fmt.Printf("  Found %d files, total size: %.2f MB\n", len(result.Files), float64(result.TotalSize)/(1024*1024))
-			
+
 			totalFiles += len(result.Files)
 			totalSize += result.TotalSize
 		}

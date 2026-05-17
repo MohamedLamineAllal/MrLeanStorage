@@ -42,9 +42,9 @@ func (s *Scanner) Scan(target Target) (*Result, error) {
 		return nil, fmt.Errorf("failed to expand path %s: %w", target.Path, err)
 	}
 
-	// Check if directory exists
-	if _, err := os.Stat(expandedPath); os.IsNotExist(err) {
-		return &Result{TargetName: target.Name, Files: []string{}}, nil
+	paths, err := filepath.Glob(expandedPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to glob path %s: %w", expandedPath, err)
 	}
 
 	result := &Result{
@@ -54,33 +54,35 @@ func (s *Scanner) Scan(target Target) (*Result, error) {
 
 	now := time.Now()
 
-	err = filepath.Walk(expandedPath, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			if os.IsPermission(err) {
+	for _, p := range paths {
+		err = filepath.Walk(p, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				if os.IsPermission(err) {
+					return nil
+				}
+				return err
+			}
+
+			// Skip the root path itself
+			if path == p {
 				return nil
 			}
-			return err
-		}
 
-		// Skip the root path itself
-		if path == expandedPath {
-			return nil
-		}
-
-		// If it's a directory, we might want to clean it if it's old enough, 
-		// but usually we clean files. For simplicity, we'll list files.
-		if !info.IsDir() {
-			if now.Sub(info.ModTime()) > target.Threshold {
-				result.Files = append(result.Files, path)
-				result.TotalSize += info.Size()
+			// If it's a directory, we might want to clean it if it's old enough,
+			// but usually we clean files. For simplicity, we'll list files.
+			if !info.IsDir() {
+				if now.Sub(info.ModTime()) > target.Threshold {
+					result.Files = append(result.Files, path)
+					result.TotalSize += info.Size()
+				}
 			}
+
+			return nil
+		})
+
+		if err != nil {
+			s.logger.Warn("Partial walk failed", zap.String("path", p), zap.Error(err))
 		}
-
-		return nil
-	})
-
-	if err != nil {
-		return nil, fmt.Errorf("walk failed: %w", err)
 	}
 
 	return result, nil
