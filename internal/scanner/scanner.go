@@ -63,7 +63,7 @@ func (s *Scanner) Scan(target Target) (*Result, error) {
 		}
 
 		if (target.Type == "folder" || target.Type == "both") && info.IsDir() {
-			isStale, err := s.isFolderStale(p, target.Threshold, now)
+			isStale, err := s.checkStaleness(p, target.Threshold, now)
 			if err != nil {
 				s.logger.Warn("Failed to check folder staleness", zap.String("path", p), zap.Error(err))
 				continue
@@ -121,16 +121,28 @@ func (s *Scanner) walkFiles(path string, threshold time.Duration, matches *[]str
 	return nil
 }
 
-func (s *Scanner) isFolderStale(path string, threshold time.Duration, now time.Time) (bool, error) {
+func (s *Scanner) checkStaleness(path string, threshold time.Duration, now time.Time) (bool, error) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return false, err
+	}
+
+	// 1. Fast Path: If the folder itself is stale, it's definitely stale.
+	if now.Sub(info.ModTime()) > threshold {
+		return true, nil
+	}
+
+	// 2. Slow Path: Folder mtime is recent, perform a deep check.
+	// A folder is stale only if NONE of its files are newer than the threshold.
 	stale := true
-	err := filepath.Walk(path, func(p string, info os.FileInfo, err error) error {
+	err = filepath.Walk(path, func(p string, info os.FileInfo, err error) error {
 		if err != nil {
-			return nil // Skip errors accessing files
+			return nil // Skip errors
 		}
 		if !info.IsDir() {
 			if now.Sub(info.ModTime()) <= threshold {
 				stale = false
-				return fmt.Errorf("not stale") // Fast exit
+				return fmt.Errorf("not stale")
 			}
 		}
 		return nil
