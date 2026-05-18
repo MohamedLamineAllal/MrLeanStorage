@@ -1,0 +1,9 @@
+{
+  "output": {
+    "maxInlineToolOutputLines": 200,
+    "truncateToolOutputThreshold": 50000
+  },
+  "ui": {
+    "incrementalRendering": false
+  }
+}
