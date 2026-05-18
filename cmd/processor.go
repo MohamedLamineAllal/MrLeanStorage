@@ -104,13 +104,48 @@ func (tp *TargetProcessor) Run(targets []config.TargetConfig, isClean bool, verb
 		if len(result.Files) == 0 {
 			fmt.Println("  No files match cleanup criteria.")
 		} else {
-			if verbose || len(result.Files) <= 10 {
-				for _, file := range result.Files {
-					colorMatch.Print("  [MATCH] ")
-					fmt.Println(file)
+			// Group matches by parent directory for smarter output
+			dirGroups := make(map[string][]string)
+			for _, p := range result.Files {
+				parent := filepath.Dir(p)
+				dirGroups[parent] = append(dirGroups[parent], p)
+			}
+
+			// Maintain order by sorting parents
+			parents := make([]string, 0, len(dirGroups))
+			for k := range dirGroups {
+				parents = append(parents, k)
+			}
+			// Manual sort for simplicity in this context
+			for i := 0; i < len(parents); i++ {
+				for j := i + 1; j < len(parents); j++ {
+					if parents[i] > parents[j] {
+						parents[i], parents[j] = parents[j], parents[i]
+					}
 				}
-			} else {
-				fmt.Printf("  Found %d matches (use --verbose to list all)\n", len(result.Files))
+			}
+
+			displayCount := 0
+			maxDisplay := 5
+			
+			for _, parent := range parents {
+				group := dirGroups[parent]
+				for i, file := range group {
+					// Always log to file if it was initialized
+					if logFile != nil {
+						fmt.Fprintf(logFile, "  [MATCH] %s\n", file)
+					}
+
+					if verbose || displayCount < maxDisplay {
+						colorMatch.Print("  [MATCH] ")
+						fmt.Println(file)
+						displayCount++
+					} else if displayCount == maxDisplay {
+						fmt.Printf("    ... and more matches (see log for full list)\n")
+						displayCount++ // only print once per target
+					}
+					_ = i // ignore index
+				}
 			}
 			fmt.Printf("  Total size: %.2f MB\n", float64(result.TotalSize)/(1024*1024))
 		}

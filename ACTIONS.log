@@ -93,3 +93,4 @@ Action: Added colorful logging to the CLI using fatih/color. Created cmd/colors.
 Action: Optimized getDirSize in Scanner to respect ignore patterns. This explains the slight discrepancy between scan and clean reports (~100MB difference).
 Action: Added cmd/size_consistency_test.go to verify that scan and clean report identical total sizes. Harmonized ignore logic between Scanner and Cleaner.
 Action: Implemented truncated CLI logging (5 items max per folder) and full logging to /tmp/mls-last-run.log. Updated Cleaner and TargetProcessor.
+Action: Finalized smart logging compaction. CLI now groups matches by directory and limits display to 5 items per directory. Full untruncated logs are written to /tmp/mls-last-run.log.
