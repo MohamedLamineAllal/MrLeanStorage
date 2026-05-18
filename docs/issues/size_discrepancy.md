@@ -16,4 +16,11 @@ Two main issues contribute to this discrepancy:
 
 ## Implementation Details
 - Refactored `Scanner.Scan` to return early for a path if it's already added as a stale folder.
-- Added a `getDirSize` utility or updated `Cleaner` to correctly calculate directory sizes.
+- Updated `Scanner.getDirSize` to respect ignore patterns (like `.DS_Store`), ensuring consistency with the files that will actually be processed.
+- Added a `getDirSize` utility to `Cleaner` to correctly calculate directory sizes for the final summary.
+
+## Note on Remaining Minor Differences
+A small difference (e.g., ~100MB out of 50GB) may still appear between `scan` and `clean` totals. This is because:
+1.  **Ignore Patterns**: `Scanner` respects global ignore patterns (e.g., `.DS_Store`) when calculating directory sizes.
+2.  **Cleaner vs. OS**: `Cleaner` reports the size of what it *intends* to delete, while the actual space freed is determined by the OS filesystem (which includes metadata, block sizes, and hidden files that `mls` might ignore).
+3.  **Filesystem Latency**: Files might be modified or deleted by the system between the `scan` and `clean` phases.

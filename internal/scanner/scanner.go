@@ -196,6 +196,9 @@ func (s *Scanner) getDirSize(path string) (int64, error) {
 	}
 
 	for _, entry := range entries {
+		if s.isIgnored(entry.Name()) {
+			continue
+		}
 		info, err := entry.Info()
 		if err != nil {
 			continue

@@ -90,3 +90,4 @@
 Action: Starting investigation into scan vs clean size discrepancy. Reading AGENTS.md, GEMINI.md, and MEMORY.md.
 Action: Fixed size discrepancy between scan and clean by preventing double-counting in scanner and correcting directory size calculation in cleaner. Documented in docs/issues/size_discrepancy.md.
 Action: Added colorful logging to the CLI using fatih/color. Created cmd/colors.go for shared color themes. Updated processor, cleaner, config, and serve commands.
+Action: Optimized getDirSize in Scanner to respect ignore patterns. This explains the slight discrepancy between scan and clean reports (~100MB difference).
