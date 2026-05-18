@@ -107,7 +107,7 @@ func (tp *TargetProcessor) Run(targets []config.TargetConfig, isClean bool, verb
 		fmt.Printf("\nSummary: Found %d files, total size: %.2f MB, %d commands scheduled\n", len(allPaths), float64(totalSize)/(1024*1024), len(allCommands))
 		return nil
 	}
-    // ... (rest of the cleaner logic)
+	// ... (rest of the cleaner logic)
 
 	// Perform cleaning
 	if len(allPaths) > 0 {
@@ -127,5 +127,6 @@ func (tp *TargetProcessor) Run(targets []config.TargetConfig, isClean bool, verb
 	}
 
 	fmt.Printf("Mode: %s\n", map[bool]string{true: "DRY RUN", false: "LIVE"}[tp.cleaner.DryRun()])
+	fmt.Printf("If you want to perform the cleaning, run: `mls clean --dry-run=false`")
 	return nil
 }

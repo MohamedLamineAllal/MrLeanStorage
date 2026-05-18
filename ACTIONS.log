@@ -83,3 +83,7 @@
 - Consolidated all target processing, matching, and summary logic into cmd/processor.go.
 - Restored concise logging format with support for the --verbose flag.
 - Verified build and ensured all tests pass.
+
+[2026-05-18]
+- Refactored internal/cleaner/cleaner.go to use human-readable console output (fmt) for user-facing progress while retaining zap for technical logging.
+- Improved the final summary output in cmd/processor.go with a clear instruction on how to perform actual deletions.

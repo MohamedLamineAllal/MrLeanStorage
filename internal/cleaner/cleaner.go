@@ -1,6 +1,7 @@
 package cleaner
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
@@ -30,20 +31,20 @@ func (c *Cleaner) Clean(paths []string) (int, int64, error) {
 	for _, path := range paths {
 		info, err := os.Stat(path)
 		if err != nil {
-			c.logger.Error("Failed to stat path", zap.String("path", path), zap.Error(err))
+			c.logger.Debug("Failed to stat path", zap.String("path", path), zap.Error(err))
 			continue
 		}
 
 		size := info.Size()
 
 		if c.dryRun {
-			c.logger.Info("[DRY RUN] Would delete", zap.String("path", path), zap.Int64("size", size))
+			fmt.Printf("  [DRY RUN] Would delete: %s\n", path)
 			deletedCount++
 			freedSpace += size
 			continue
 		}
 
-		c.logger.Info("Deleting", zap.String("path", path), zap.Int64("size", size))
+		fmt.Printf("  Deleting: %s\n", path)
 		err = os.RemoveAll(path)
 		if err != nil {
 			c.logger.Error("Failed to delete", zap.String("path", path), zap.Error(err))
@@ -59,11 +60,11 @@ func (c *Cleaner) Clean(paths []string) (int, int64, error) {
 // ExecuteCommand runs a shell command
 func (c *Cleaner) ExecuteCommand(command string) error {
 	if c.dryRun {
-		c.logger.Info("[DRY RUN] Would execute command", zap.String("command", command))
+		fmt.Printf("  [DRY RUN] Would execute command: %s\n", command)
 		return nil
 	}
 
-	c.logger.Info("Executing command", zap.String("command", command))
+	fmt.Printf("  Executing command: %s\n", command)
 	parts := strings.Fields(command)
 	cmd := exec.Command(parts[0], parts[1:]...)
 	err := cmd.Run()
@@ -73,6 +74,7 @@ func (c *Cleaner) ExecuteCommand(command string) error {
 	}
 	return nil
 }
+
 
 // SetDryRun toggles the dry run mode
 func (c *Cleaner) SetDryRun(dryRun bool) {

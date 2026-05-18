@@ -83,3 +83,6 @@ User: When running scan the configuration file when doesn't exist is not being c
 
 [2026-05-18]
 - Request: "Why are we repeating work in scan and clean... have one function that manage with dryRun flag..."
+
+[2026-05-18]
+- Request: "bad logs clean them to be human readable"
