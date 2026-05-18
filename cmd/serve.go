@@ -35,7 +35,7 @@ var serveCmd = &cobra.Command{
 			logger.Info("Starting scheduled cleanup")
 
 			sc := scanner.New(logger, cfg.IgnorePatterns)
-			cl := cleaner.New(logger, cfg.DryRun)
+			cl := cleaner.New(logger, cfg.DryRun, cfg.IgnorePatterns)
 
 			var allPaths []string
 			for _, t := range cfg.Targets {

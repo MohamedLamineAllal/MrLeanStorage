@@ -23,7 +23,7 @@ type TargetProcessor struct {
 func NewTargetProcessor(logger *zap.Logger, ignorePatterns []string, dryRun bool) *TargetProcessor {
 	return &TargetProcessor{
 		scanner:   scanner.New(logger, ignorePatterns),
-		cleaner:   cleaner.New(logger, dryRun),
+		cleaner:   cleaner.New(logger, dryRun, ignorePatterns),
 		scheduler: scheduler.New(logger),
 		logger:    logger,
 	}

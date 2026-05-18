@@ -22,7 +22,7 @@ func TestClean(t *testing.T) {
 	err = os.WriteFile(file2, []byte("content2"), 0644)
 	assert.NoError(t, err)
 
-	c := New(zap.NewNop(), false) // Not dry run
+	c := New(zap.NewNop(), false, nil) // Not dry run
 	count, size, err := c.Clean([]string{file1, file2})
 	assert.NoError(t, err)
 	assert.Equal(t, 2, count)
@@ -43,7 +43,7 @@ func TestCleanDryRun(t *testing.T) {
 	err = os.WriteFile(file1, []byte("content1"), 0644)
 	assert.NoError(t, err)
 
-	c := New(zap.NewNop(), true) // Dry run
+	c := New(zap.NewNop(), true, nil) // Dry run
 	count, size, err := c.Clean([]string{file1})
 	assert.NoError(t, err)
 	assert.Equal(t, 1, count)
@@ -54,7 +54,7 @@ func TestCleanDryRun(t *testing.T) {
 }
 
 func TestExecuteCommand(t *testing.T) {
-	c := New(zap.NewNop(), true) // Dry run mode
+	c := New(zap.NewNop(), true, nil) // Dry run mode
 	err := c.ExecuteCommand("echo hello")
 	assert.NoError(t, err)
 

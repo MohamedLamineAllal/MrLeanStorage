@@ -20,16 +20,29 @@ var (
 
 // Cleaner handles the deletion of files
 type Cleaner struct {
-	logger *zap.Logger
-	dryRun bool
+	logger         *zap.Logger
+	dryRun         bool
+	ignorePatterns []string
 }
 
 // New creates a new Cleaner
-func New(logger *zap.Logger, dryRun bool) *Cleaner {
+func New(logger *zap.Logger, dryRun bool, ignorePatterns []string) *Cleaner {
 	return &Cleaner{
-		logger: logger,
-		dryRun: dryRun,
+		logger:         logger,
+		dryRun:         dryRun,
+		ignorePatterns: ignorePatterns,
 	}
+}
+
+// isIgnored checks if a file name matches any of the ignore patterns
+func (c *Cleaner) isIgnored(name string) bool {
+	for _, pattern := range c.ignorePatterns {
+		matched, err := filepath.Match(pattern, name)
+		if err == nil && matched {
+			return true
+		}
+	}
+	return false
 }
 
 // Clean deletes the provided list of file paths
@@ -82,6 +95,9 @@ func (c *Cleaner) getDirSize(path string) (int64, error) {
 	}
 
 	for _, entry := range entries {
+		if c.isIgnored(entry.Name()) {
+			continue
+		}
 		info, err := entry.Info()
 		if err != nil {
 			continue
