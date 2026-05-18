@@ -13,6 +13,7 @@ The project is currently in the **Development & Feature Refinement** phase. We h
 - **Scheduler**: Implemented a periodic task scheduler with persistent last-run state tracking.
 - **Cleanup Inventory**: Populated configuration with the full list of safe cleanup targets.
 - **Ignore Patterns**: Implemented a performant glob-based ignore system (global and target-specific) to exclude macOS metadata. Optimized directory walking to avoid unnecessary errors and refactored logging.
+- **Bug Fix**: Resolved size discrepancy between `scan` and `clean` commands. Prevented double-counting in `Scanner` for stale folders and implemented accurate recursive directory size calculation in `Cleaner`. Documented in `docs/issues/size_discrepancy.md`.
 - **Compliance**: Restored architectural compliance to `AGENTS.md` mandates, including `Prompts.log` and `ACTIONS.log` enforcement.
 
 ## Pending Tasks

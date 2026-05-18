@@ -94,11 +94,13 @@ func (s *Scanner) Scan(target Target, targetIgnorePatterns []string) (*Result, e
 				}
 				result.Files = append(result.Files, p)
 				result.TotalSize += size
+				// If we added the folder, we don't need to walk its files individually
+				continue
 			}
 		}
 
 		// Always walk files if type allows files
-		if (target.Type == "file" || target.Type == "both") {
+		if target.Type == "file" || target.Type == "both" {
 			if info.IsDir() {
 				err = s.walkFiles(p, target.Threshold, &result.Files, &result.TotalSize, now)
 				if err != nil {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"go.uber.org/zap"
@@ -35,7 +36,12 @@ func (c *Cleaner) Clean(paths []string) (int, int64, error) {
 			continue
 		}
 
-		size := info.Size()
+		var size int64
+		if info.IsDir() {
+			size, _ = c.getDirSize(path)
+		} else {
+			size = info.Size()
+		}
 
 		if c.dryRun {
 			fmt.Printf("  [DRY RUN] Would delete: %s\n", path)
@@ -55,6 +61,31 @@ func (c *Cleaner) Clean(paths []string) (int, int64, error) {
 	}
 
 	return deletedCount, freedSpace, nil
+}
+
+func (c *Cleaner) getDirSize(path string) (int64, error) {
+	var size int64
+	entries, err := os.ReadDir(path)
+	if err != nil {
+		return 0, err
+	}
+
+	for _, entry := range entries {
+		info, err := entry.Info()
+		if err != nil {
+			continue
+		}
+
+		if entry.IsDir() {
+			subSize, err := c.getDirSize(filepath.Join(path, entry.Name()))
+			if err == nil {
+				size += subSize
+			}
+		} else {
+			size += info.Size()
+		}
+	}
+	return size, nil
 }
 
 // ExecuteCommand runs a shell command

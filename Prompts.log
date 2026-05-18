@@ -86,3 +86,4 @@ User: When running scan the configuration file when doesn't exist is not being c
 
 [2026-05-18]
 - Request: "bad logs clean them to be human readable"
+User Prompt: Can you investigate why mls clean and mls scan are showing different numbers for how much is going to be cleaned scan showing 90go+ and clean showing 50go+. Do this and fix it. and Document that in docs/issues/ define problem, detail why, and the fix. After this, commit the changes. Once done fully with this. Move to the next task: Make the logging colorful. Pick great colors. Paths. Target, command to execute. Color things well. After you apply the changes and documents them. commit again.
