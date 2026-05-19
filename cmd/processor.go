@@ -100,8 +100,14 @@ func (tp *TargetProcessor) Run(targets []config.TargetConfig, isClean bool, verb
 
 	tp.printSummary(uniqueCount, totalSize, isClean, logPath)
 
+	// Print command-based targets
+	cmdHeader := false
 	for _, t := range targets {
 		if t.Command != "" {
+			if !cmdHeader {
+				fmt.Printf("\nCommands Targets:\n")
+				cmdHeader = true
+			}
 			tp.handleCommand(t, nil, nil)
 		}
 	}
