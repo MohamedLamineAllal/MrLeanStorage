@@ -1,4 +1,5 @@
 targets:
+  # Macos common files Targets
   - name: "Arc CacheStorage Cache"
     path: "~/Library/Application Support/Arc/User Data/**/CacheStorage"
     threshold_days: 3
@@ -184,6 +185,18 @@ targets:
     threshold_days: 7
     safety_level: 1
     type: "both"
+  # Dev Targets
+  - name: "Repos node_modules"
+    path: "~/repos/**/node_modules/**"
+    threshold_days: 30
+    safety_level: 1
+    type: "both"
+  - name: "Repos .next"
+    path: "~/repos/**/.next/**"
+    threshold_days: 30
+    safety_level: 1
+    type: "both"
+  # Commands Targets
   - name: "PNPM Store Prune"
     command: "pnpm store prune"
     interval_days: 30
