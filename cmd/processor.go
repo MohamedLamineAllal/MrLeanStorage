@@ -126,9 +126,9 @@ func (tp *TargetProcessor) Run(targets []config.TargetConfig, isClean bool, verb
 			fmt.Printf("\n")
 			if firstCommand {
 				if tp.engine.Cleaner().DryRun() {
-					colorInfo.Printf("Processing commands Targets (DRY RUN):\n")
+					colorInfo.Printf("\nProcessing commands Targets (DRY RUN):\n\n")
 				} else {
-					colorInfo.Printf("Processing commands Targets:\n")
+					colorInfo.Printf("\nProcessing commands Targets:\n\n")
 				}
 				firstCommand = false
 			}
