@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/mohamedlamineallal/MacosLeanStorage/internal/config"
 	"github.com/mohamedlamineallal/MacosLeanStorage/internal/engine"
@@ -62,6 +63,9 @@ func (tp *TargetProcessor) getHooks(logFile *os.File) engine.Hooks {
 
 // Run executes the scanning and optional cleaning process.
 func (tp *TargetProcessor) Run(targets []config.TargetConfig, isClean bool, verbose bool) error {
+	var allCommands []string
+	var commandNames []string
+
 	logPath := filepath.Join(os.TempDir(), "mls-last-run.log")
 	logFile, err := os.OpenFile(logPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
 	if err != nil {
@@ -72,25 +76,51 @@ func (tp *TargetProcessor) Run(targets []config.TargetConfig, isClean bool, verb
 
 	hooks := tp.getHooks(logFile)
 
+	// Scan phase
+	resultMap, err := tp.engine.Scan(targets, hooks)
+	if err != nil {
+		return err
+	}
+
+	// Iterate through targets to print scan summary per target
+	for _, t := range targets {
+		if t.Command != "" {
+			tp.handleCommand(t, &allCommands, &commandNames)
+			continue
+		}
+
+		res, ok := resultMap[t.Name]
+		if !ok {
+			continue
+		}
+
+		if len(res.Files) == 0 {
+			fmt.Printf("\nTarget: %s - No files match cleanup criteria.", t.Name)
+			continue
+		}
+
+		if isClean {
+			fmt.Printf("\nTarget: %s - %d files will be processed, freeing %.2f MB", t.Name, len(res.Files), float64(res.TotalSize)/(1024*1024))
+		} else {
+			fmt.Printf("\nTarget: %s - Found %d files, total size: %.2f MB", t.Name, len(res.Files), float64(res.TotalSize)/(1024*1024))
+		}
+	}
+
+	// Clean phase
 	if isClean {
-		uniqueCount, totalSize, err := tp.engine.ScanAndClean(targets, hooks)
+		uniqueCount, totalSize, err := tp.engine.Clean(resultMap, targets, hooks)
 		if err != nil {
 			return err
 		}
 		tp.printSummary(uniqueCount, totalSize, isClean, logPath)
 	} else {
-		resMap, err := tp.engine.Scan(targets, hooks)
-		if err != nil {
-			return err
+		// Calculate final unique stats for scan only
+		aggregator := &engine.ResultAggregator{UniquePaths: make(map[string]int64)}
+		for _, res := range resultMap {
+			aggregator.Add(res.Files, res.FileSizes)
 		}
-		
-		totalFiles := 0
-		var totalSize int64
-		for _, res := range resMap {
-			totalFiles += len(res.Files)
-			totalSize += res.TotalSize
-		}
-		tp.printSummary(totalFiles, totalSize, isClean, logPath)
+		uniqueCount, totalSize := aggregator.GetStats()
+		tp.printSummary(uniqueCount, totalSize, isClean, logPath)
 	}
 
 	return nil
@@ -112,5 +142,33 @@ func (tp *TargetProcessor) printSummary(count int, size int64, isClean bool, log
 	if count > 0 {
 		fmt.Printf("Full log written to: ")
 		colorPath.Println(logPath)
+	}
+}
+
+func (tp *TargetProcessor) handleCommand(t config.TargetConfig, allCommands *[]string, commandNames *[]string) {
+	fmt.Printf("\n")
+	colorTarget.Printf("Target: %s", t.Name)
+	colorCommand.Printf(" (command: %s)\n", t.Command)
+	if t.IntervalDays > 0 {
+		fmt.Printf("  Interval: %d days\n", t.IntervalDays)
+		runTime := "Ready"
+		statePath := filepath.Join(os.TempDir(), fmt.Sprintf("mls-cmd-%s.lastrun", t.Name))
+		data, err := os.ReadFile(statePath)
+		if err == nil {
+			lastRun, err := time.Parse(time.RFC3339, string(data))
+			if err == nil {
+				nextRun := lastRun.Add(time.Duration(t.IntervalDays) * 24 * time.Hour)
+				if time.Now().Before(nextRun) {
+					runTime = nextRun.Format("2006-01-02 15:04")
+				}
+			}
+		}
+		fmt.Printf("  Next Run: %s\n", runTime)
+	} else {
+		fmt.Println("  Interval: Not scheduled")
+	}
+	if tp.scheduler.ShouldRunCommand(t.Name, t.IntervalDays) {
+		*allCommands = append(*allCommands, t.Command)
+		*commandNames = append(*commandNames, t.Name)
 	}
 }

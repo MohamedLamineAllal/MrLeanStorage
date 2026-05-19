@@ -87,7 +87,7 @@ func (e *Engine) Scan(targets []config.TargetConfig, hooks Hooks) (map[string]*s
 
 // Clean executes the cleanup process for the identified scan results.
 func (e *Engine) Clean(resultMap map[string]*scanner.Result, targets []config.TargetConfig, hooks Hooks) (int, int64, error) {
-	aggregator := &ResultAggregator{uniquePaths: make(map[string]int64)}
+	aggregator := &ResultAggregator{UniquePaths: make(map[string]int64)}
 
 	for _, t := range targets {
 		res, ok := resultMap[t.Name]
@@ -110,7 +110,7 @@ func (e *Engine) Clean(resultMap map[string]*scanner.Result, targets []config.Ta
 		}
 	}
 
-	uniqueCount := len(aggregator.uniquePaths)
+	uniqueCount := len(aggregator.UniquePaths)
 	return uniqueCount, aggregator.totalSize, nil
 }
 
@@ -126,7 +126,7 @@ func (e *Engine) ScanAndClean(targets []config.TargetConfig, hooks Hooks) (int, 
 // ResultAggregator safely aggregates unique scan results.
 type ResultAggregator struct {
 	mu          sync.RWMutex
-	uniquePaths map[string]int64
+	UniquePaths map[string]int64
 	totalSize   int64
 }
 
@@ -135,8 +135,8 @@ func (ra *ResultAggregator) Add(files []string, sizes []int64) {
 	ra.mu.Lock()
 	defer ra.mu.Unlock()
 	for i, file := range files {
-		if _, exists := ra.uniquePaths[file]; !exists {
-			ra.uniquePaths[file] = sizes[i]
+		if _, exists := ra.UniquePaths[file]; !exists {
+			ra.UniquePaths[file] = sizes[i]
 			ra.totalSize += sizes[i]
 		}
 	}
@@ -146,7 +146,7 @@ func (ra *ResultAggregator) Add(files []string, sizes []int64) {
 func (ra *ResultAggregator) GetStats() (int, int64) {
 	ra.mu.RLock()
 	defer ra.mu.RUnlock()
-	return len(ra.uniquePaths), ra.totalSize
+	return len(ra.UniquePaths), ra.totalSize
 }
 
 // Cleaner returns the underlying Cleaner instance.
