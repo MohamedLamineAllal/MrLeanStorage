@@ -58,6 +58,12 @@ func (e *Engine) Scan(targets []config.TargetConfig, hooks Hooks) (map[string]*s
 					Type:        t.Type,
 				}
 				res, err := e.scanner.Scan(target, t.IgnorePatterns)
+
+				// Fire completion hook immediately after a target is processed
+				if hooks.OnTargetScanStart != nil {
+					hooks.OnTargetScanStart(t.Name, t.Path)
+				}
+
 				results <- struct {
 					Name string
 					Res  *scanner.Result
@@ -66,6 +72,7 @@ func (e *Engine) Scan(targets []config.TargetConfig, hooks Hooks) (map[string]*s
 			}
 		}()
 	}
+// ...
 
 	for _, t := range targets {
 		if t.Command == "" {
