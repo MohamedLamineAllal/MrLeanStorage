@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/mohamedlamineallal/MacosLeanStorage/internal/config"
+	"github.com/mohamedlamineallal/MacosLeanStorage/internal/engine"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
@@ -70,10 +71,10 @@ targets := []config.TargetConfig{
 	},
 }
 
-resultMap := tp.engine.ScanTargets(targets)
+resultMap, err := tp.engine.Scan(targets, engine.Hooks{})
+assert.NoError(t, err)
 result := resultMap["Test Target"]
 assert.NotNil(t, result)
-
 // Expected: old_file.txt (10) + subfolder (30, because .DS_Store is ignored) = 40 bytes
 assert.Equal(t, int64(40), result.TotalSize)
 
