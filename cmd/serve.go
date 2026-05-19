@@ -79,6 +79,22 @@ var serveCmd = &cobra.Command{
 		// Wait for interruption
 		sigChan := make(chan os.Signal, 1)
 		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+		// Periodic check for missed tasks every 30 minutes
+		ticker := time.NewTicker(30 * time.Minute)
+		defer ticker.Stop()
+
+		go func() {
+			for {
+				select {
+				case <-ticker.C:
+					s.CheckForMissedTasks(task)
+				case <-sigChan:
+					return
+				}
+			}
+		}()
+
 		<-sigChan
 
 		colorWarning.Println("\nStopping scheduler...")
