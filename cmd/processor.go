@@ -142,7 +142,7 @@ func (tp *TargetProcessor) Run(targets []config.TargetConfig, isClean bool, verb
 				colorCommand.Printf(" (command: %s)\n", command)
 				if !shouldRunCommand {
 					nextRun, _ := tp.scheduler.GetNextRunTime(name, t.IntervalDays)
-					colorInfo.Printf("Skipping command for target: %s (next scheduled at: %s)", name, nextRun.Format("2006-01-02 15:04:05"))
+					colorInfo.Printf("Skipping command for target: %s (next scheduled at: %s)\n", name, nextRun.Format("2006-01-02 15:04:05"))
 				}
 			}
 		}
