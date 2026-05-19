@@ -4,55 +4,38 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"runtime"
-	"sync"
 	"time"
 
 	"github.com/mohamedlamineallal/MacosLeanStorage/internal/cleaner"
 	"github.com/mohamedlamineallal/MacosLeanStorage/internal/config"
-	"github.com/mohamedlamineallal/MacosLeanStorage/internal/scanner"
+	"github.com/mohamedlamineallal/MacosLeanStorage/internal/core"
 	"github.com/mohamedlamineallal/MacosLeanStorage/internal/scheduler"
 	"go.uber.org/zap"
 )
 
 // TargetProcessor coordinates the scanning and cleaning of multiple targets.
-// It acts as the high-level orchestrator that connects the scanner, cleaner, and scheduler.
 type TargetProcessor struct {
-	scanner   *scanner.Scanner
+	engine    *core.Engine
 	cleaner   *cleaner.Cleaner
 	scheduler *scheduler.Scheduler
 	logger    *zap.Logger
 }
 
-// NewTargetProcessor creates a new TargetProcessor with initialized scanner, cleaner, and scheduler.
+// NewTargetProcessor creates a new TargetProcessor.
 func NewTargetProcessor(logger *zap.Logger, ignorePatterns []string, dryRun bool) *TargetProcessor {
 	return &TargetProcessor{
-		scanner:   scanner.New(logger, ignorePatterns),
+		engine:    core.NewEngine(logger, ignorePatterns),
 		cleaner:   cleaner.New(logger, dryRun, ignorePatterns),
 		scheduler: scheduler.New(logger),
 		logger:    logger,
 	}
 }
 
-// Result holds the findings of a scan.
-// This type is intended for aggregating results across multiple targets.
-type Result struct {
-	Paths    []string
-	Commands []string
-	Names    []string
-	Size     int64
-}
-
-// Run executes the scanning or cleaning process for the provided list of targets.
-// It iterates through each target, performs the scan, and optionally executes the cleaning logic.
-// It also handles scheduled commands and generates a final summary for the user.
+// Run executes scanning and cleaning in order.
 func (tp *TargetProcessor) Run(targets []config.TargetConfig, isClean bool, verbose bool) error {
-	var allPaths []string
 	var allCommands []string
 	var commandNames []string
-	var totalSize int64
 
-	// Initialize audit log file to capture detailed scan results
 	logPath := filepath.Join(os.TempDir(), "mls-last-run.log")
 	logFile, err := os.OpenFile(logPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
 	if err == nil {
@@ -60,113 +43,59 @@ func (tp *TargetProcessor) Run(targets []config.TargetConfig, isClean bool, verb
 		tp.cleaner.SetLogFile(logFile)
 	}
 
-	// Prepare for parallel execution using a worker pool
-	var wg sync.WaitGroup
-	numWorkers := runtime.NumCPU()
-	jobs := make(chan config.TargetConfig, len(targets))
-	// Buffered channel to collect scan results from workers
-	results := make(chan struct {
-		Config config.TargetConfig
-		Res    *scanner.Result
-		Err    error
-	}, len(targets))
-
-	// Start worker pool to process scanning jobs concurrently
-	for i := 0; i < numWorkers; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for t := range jobs {
-				target := scanner.Target{
-					Name:        t.Name,
-					Path:        t.Path,
-					Threshold:   time.Duration(t.Threshold) * 24 * time.Hour,
-					SafetyLevel: t.SafetyLevel,
-					Type:        t.Type,
-				}
-				res, err := tp.scanner.Scan(target, t.IgnorePatterns)
-				results <- struct {
-					Config config.TargetConfig
-					Res    *scanner.Result
-					Err    error
-				}{t, res, err}
-			}
-		}()
-	}
-
-
-	// Queue scan jobs only
-	for _, t := range targets {
-		if t.Command == "" {
-			jobs <- t
-		}
-	}
-	close(jobs)
-	wg.Wait()
-	close(results)
-
-	// Process aggregated scan results
+	resultMap := tp.engine.ScanTargets(targets)
 	aggregator := NewResultAggregator()
-	for res := range results {
-		if res.Err != nil {
-			tp.logger.Error("Scan failed for target", zap.String("name", res.Config.Name), zap.Error(res.Err))
+
+	for _, t := range targets {
+		if t.Command != "" {
+			tp.handleCommand(t, &allCommands, &commandNames)
+			continue
+		}
+
+		res, ok := resultMap[t.Name]
+		if !ok {
 			continue
 		}
 
 		fmt.Printf("\n")
-		colorTarget.Printf("Target: %s", res.Config.Name)
+		colorTarget.Printf("Target: %s", t.Name)
 		fmt.Print(" (")
-		colorPath.Print(res.Config.Path)
-		fmt.Printf(", type: %s)\n", res.Config.Type)
+		colorPath.Print(t.Path)
+		fmt.Printf(", type: %s)\n", t.Type)
 
-		// Log matched files to audit file
-		if len(res.Res.Files) > 0 && logFile != nil {
-			for _, file := range res.Res.Files {
-				fmt.Fprintf(logFile, "  [MATCH] %s (Target: %s)\n", file, res.Config.Name)
+		if len(res.Files) > 0 && logFile != nil {
+			for _, file := range res.Files {
+				fmt.Fprintf(logFile, "  [MATCH] %s (Target: %s)\n", file, t.Name)
 			}
 		}
 
-		// Add files to aggregator
-		aggregator.Add(res.Res.Files, res.Res.FileSizes)
+		aggregator.Add(res.Files, res.FileSizes)
 
-		if len(res.Res.Files) == 0 {
+		if len(res.Files) == 0 {
 			fmt.Println("  No files match cleanup criteria.")
 		} else {
 			if isClean {
-				fmt.Printf("  %d files will be deleted, freeing %.2f MB\n", len(res.Res.Files), float64(res.Res.TotalSize)/(1024*1024))
+				fmt.Printf("  %d files will be deleted, freeing %.2f MB\n", len(res.Files), float64(res.TotalSize)/(1024*1024))
 			} else {
-				fmt.Printf("  Found %d files, total size: %.2f MB\n", len(res.Res.Files), float64(res.Res.TotalSize)/(1024*1024))
+				fmt.Printf("  Found %d files, total size: %.2f MB\n", len(res.Files), float64(res.TotalSize)/(1024*1024))
 			}
 		}
 
-		// Perform cleanup if instructed
-		if isClean && len(res.Res.Files) > 0 {
-			_, _, err := tp.cleaner.Clean(res.Res.Files)
+		if isClean && len(res.Files) > 0 {
+			_, _, err := tp.cleaner.Clean(res.Files)
 			if err != nil {
-				tp.logger.Error("Clean failed for target", zap.String("name", res.Config.Name), zap.Error(err))
+				tp.logger.Error("Clean failed for target", zap.String("name", t.Name), zap.Error(err))
 			}
-		}
-
-		allPaths = append(allPaths, res.Res.Files...)
-		totalSize += res.Res.TotalSize
-	}
-
-	// After all scanning and cleaning, run scheduled commands
-	for _, t := range targets {
-		if t.Command != "" {
-			tp.handleCommand(t, &allCommands, &commandNames)
 		}
 	}
 
 	uniqueCount, totalUniqueSize := aggregator.GetStats()
-	allPaths = aggregator.GetUniquePaths()
+	allPaths := aggregator.GetUniquePaths()
 
-	// Final summary for dry-run/preview mode
 	if !isClean {
 		fmt.Printf("\n")
 		colorSuccess.Print("Summary: ")
 		fmt.Printf("Found %d unique files, total size estimation (approx): %.2f MB, %d commands scheduled\n", uniqueCount, float64(totalUniqueSize)/(1024*1024), len(allCommands))
-		
 		if uniqueCount > 0 {
 			fmt.Printf("Full list of matched files available at: ")
 			colorPath.Println(logPath)
@@ -174,7 +103,6 @@ func (tp *TargetProcessor) Run(targets []config.TargetConfig, isClean bool, verb
 		return nil
 	}
 
-	// For CLEAN mode: Handle console output limits
 	if tp.cleaner.DryRun() && uniqueCount > 0 {
 		fmt.Printf("\nDetails:")
 		if uniqueCount <= 20 {
@@ -189,7 +117,6 @@ func (tp *TargetProcessor) Run(targets []config.TargetConfig, isClean bool, verb
 		}
 	}
 
-	// Final summary for clean mode
 	fmt.Printf("\n")
 	colorSuccess.Print("Clean Summary: ")
 	if tp.cleaner.DryRun() {
@@ -198,7 +125,6 @@ func (tp *TargetProcessor) Run(targets []config.TargetConfig, isClean bool, verb
 		fmt.Printf("Deleted %d files, freed %.2f MB\n", uniqueCount, float64(totalUniqueSize)/(1024*1024))
 	}
 
-	// Run all scheduled commands
 	for i, cmd := range allCommands {
 		err := tp.cleaner.ExecuteCommand(cmd)
 		if err == nil {
@@ -213,6 +139,9 @@ func (tp *TargetProcessor) Run(targets []config.TargetConfig, isClean bool, verb
 	} else {
 		colorSuccess.Print("LIVE\n")
 	}
+
+	fmt.Printf("\nFull log written to: ")
+	colorPath.Println(logPath)
 
 	return nil
 }

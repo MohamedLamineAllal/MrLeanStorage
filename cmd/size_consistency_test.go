@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/mohamedlamineallal/MacosLeanStorage/internal/config"
-	"github.com/mohamedlamineallal/MacosLeanStorage/internal/scanner"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
@@ -60,34 +59,31 @@ func TestScanAndCleanSizeConsistency(t *testing.T) {
 
 	ignorePatterns := []string{".DS_Store"}
 	tp := NewTargetProcessor(logger, ignorePatterns, true) // Dry run
-
-	tConfig := config.TargetConfig{
+// ...
+targets := []config.TargetConfig{
+	{
 		Name:           "Test Target",
 		Path:           tempDir + "/*", // Glob to catch files and subfolder
 		Threshold:      30,
 		Type:           "both",
 		IgnorePatterns: ignorePatterns,
-	}
-
-	target := scanner.Target{
-		Name:      tConfig.Name,
-		Path:      tConfig.Path,
-		Threshold: time.Duration(tConfig.Threshold) * 24 * time.Hour,
-		Type:      tConfig.Type,
-	}
-
-	result, err := tp.scanner.Scan(target, tConfig.IgnorePatterns)
-	assert.NoError(t, err)
-
-	// Expected: old_file.txt (10) + subfolder (30, because .DS_Store is ignored) = 40 bytes
-	assert.Equal(t, int64(40), result.TotalSize)
-
-	// 2. Run the cleaner part
-	count, size, err := tp.cleaner.Clean(result.Files)
-	assert.NoError(t, err)
-	
-	// Both should report exactly 40 bytes
-	assert.Equal(t, int64(2), int64(count))
-	assert.Equal(t, result.TotalSize, size, "Scan and Clean sizes should match exactly")
-	fmt.Printf("Scan size: %d, Clean size: %d\n", result.TotalSize, size)
+	},
 }
+
+resultMap := tp.engine.ScanTargets(targets)
+result := resultMap["Test Target"]
+assert.NotNil(t, result)
+
+// Expected: old_file.txt (10) + subfolder (30, because .DS_Store is ignored) = 40 bytes
+assert.Equal(t, int64(40), result.TotalSize)
+
+// 2. Run the cleaner part
+count, size, err := tp.cleaner.Clean(result.Files)
+assert.NoError(t, err)
+
+// Both should report exactly 40 bytes
+assert.Equal(t, int64(2), int64(count))
+assert.Equal(t, result.TotalSize, size, "Scan and Clean sizes should match exactly")
+fmt.Printf("Scan size: %d, Clean size: %d\n", result.TotalSize, size)
+}
+
