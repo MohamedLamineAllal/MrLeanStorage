@@ -1,30 +1,33 @@
-package core
+package engine
 
 import (
 	"runtime"
 	"sync"
 	"time"
 
+	"github.com/mohamedlamineallal/MacosLeanStorage/internal/cleaner"
 	"github.com/mohamedlamineallal/MacosLeanStorage/internal/config"
 	"github.com/mohamedlamineallal/MacosLeanStorage/internal/scanner"
 	"go.uber.org/zap"
 )
 
-// Engine orchestrates the parallel scanning of configuration targets.
+// Engine orchestrates the parallel scanning and cleaning of targets.
 type Engine struct {
 	scanner *scanner.Scanner
+	cleaner *cleaner.Cleaner
 	logger  *zap.Logger
 }
 
-// NewEngine creates a new Engine.
-func NewEngine(logger *zap.Logger, ignorePatterns []string) *Engine {
+// NewEngine creates a new Engine instance.
+func NewEngine(logger *zap.Logger, ignorePatterns []string, dryRun bool) *Engine {
 	return &Engine{
 		scanner: scanner.New(logger, ignorePatterns),
+		cleaner: cleaner.New(logger, dryRun, ignorePatterns),
 		logger:  logger,
 	}
 }
 
-// ScanTargets processes multiple targets in parallel and returns results in the original order.
+// ScanTargets processes multiple targets in parallel and returns scan results.
 func (e *Engine) ScanTargets(targets []config.TargetConfig) map[string]*scanner.Result {
 	numWorkers := runtime.NumCPU()
 	jobs := make(chan config.TargetConfig, len(targets))
@@ -75,4 +78,9 @@ func (e *Engine) ScanTargets(targets []config.TargetConfig) map[string]*scanner.
 		}
 	}
 	return resultMap
+}
+
+// Cleaner returns the underlying Cleaner instance.
+func (e *Engine) Cleaner() *cleaner.Cleaner {
+	return e.cleaner
 }

@@ -8,14 +8,14 @@ import (
 
 	"github.com/mohamedlamineallal/MacosLeanStorage/internal/cleaner"
 	"github.com/mohamedlamineallal/MacosLeanStorage/internal/config"
-	"github.com/mohamedlamineallal/MacosLeanStorage/internal/core"
+	"github.com/mohamedlamineallal/MacosLeanStorage/internal/engine"
 	"github.com/mohamedlamineallal/MacosLeanStorage/internal/scheduler"
 	"go.uber.org/zap"
 )
 
 // TargetProcessor coordinates the scanning and cleaning of multiple targets.
 type TargetProcessor struct {
-	engine    *core.Engine
+	engine    *engine.Engine
 	cleaner   *cleaner.Cleaner
 	scheduler *scheduler.Scheduler
 	logger    *zap.Logger
@@ -23,13 +23,15 @@ type TargetProcessor struct {
 
 // NewTargetProcessor creates a new TargetProcessor.
 func NewTargetProcessor(logger *zap.Logger, ignorePatterns []string, dryRun bool) *TargetProcessor {
+	eng := engine.NewEngine(logger, ignorePatterns, dryRun)
 	return &TargetProcessor{
-		engine:    core.NewEngine(logger, ignorePatterns),
-		cleaner:   cleaner.New(logger, dryRun, ignorePatterns),
+		engine:    eng,
+		cleaner:   eng.Cleaner(), // I need to add a Cleaner method to Engine. Oh, wait, I can just expose it or provide a getter. Let's add a Cleaner() method to Engine.
 		scheduler: scheduler.New(logger),
 		logger:    logger,
 	}
 }
+
 
 // Run executes scanning and cleaning in order.
 func (tp *TargetProcessor) Run(targets []config.TargetConfig, isClean bool, verbose bool) error {
