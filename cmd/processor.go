@@ -104,19 +104,18 @@ func (tp *TargetProcessor) Run(targets []config.TargetConfig, isClean bool, verb
 		if len(result.Files) == 0 {
 			fmt.Println("  No files match cleanup criteria.")
 		} else {
-			// Group matches by parent directory for smarter output
+			// Group matches by parent directory for smarter organization in the log
 			dirGroups := make(map[string][]string)
 			for _, p := range result.Files {
 				parent := filepath.Dir(p)
 				dirGroups[parent] = append(dirGroups[parent], p)
 			}
 
-			// Maintain order by sorting parents
+			// Maintain order for the log
 			parents := make([]string, 0, len(dirGroups))
 			for k := range dirGroups {
 				parents = append(parents, k)
 			}
-			// Manual sort for simplicity in this context
 			for i := 0; i < len(parents); i++ {
 				for j := i + 1; j < len(parents); j++ {
 					if parents[i] > parents[j] {
@@ -130,28 +129,42 @@ func (tp *TargetProcessor) Run(targets []config.TargetConfig, isClean bool, verb
 			
 			for _, parent := range parents {
 				group := dirGroups[parent]
-				for i, file := range group {
+				for _, file := range group {
 					// Always log to file if it was initialized
 					if logFile != nil {
 						fmt.Fprintf(logFile, "  [MATCH] %s\n", file)
 					}
 
-					if verbose || displayCount < maxDisplay {
-						colorMatch.Print("  [MATCH] ")
-						fmt.Println(file)
-						displayCount++
-					} else if displayCount == maxDisplay {
-						fmt.Printf("    ... and more matches (see log for full list)\n")
-						displayCount++ // only print once per target
+					// Truncated display to console (ONLY in scan mode)
+					if !isClean {
+						if verbose || displayCount < maxDisplay {
+							colorMatch.Print("  [MATCH] ")
+							fmt.Println(file)
+							displayCount++
+						} else if displayCount == maxDisplay {
+							fmt.Printf("    ... and %d more matches (see log for full list)\n", len(result.Files)-maxDisplay)
+							displayCount++ // only print the summary once
+						}
 					}
-					_ = i // ignore index
 				}
 			}
-			fmt.Printf("  Total size: %.2f MB\n", float64(result.TotalSize)/(1024*1024))
+			if !isClean {
+				fmt.Printf("  Total size: %.2f MB\n", float64(result.TotalSize)/(1024*1024))
+			}
 		}
 
 		allPaths = append(allPaths, result.Files...)
 		totalSize += result.TotalSize
+
+		// Perform cleaning for this target if in clean mode
+		if isClean && len(result.Files) > 0 {
+			count, size, err := tp.cleaner.Clean(result.Files)
+			if err != nil {
+				tp.logger.Error("Clean failed for target", zap.String("name", t.Name), zap.Error(err))
+			}
+			_ = count // aggregate summary at the end using allPaths and totalSize
+			_ = size
+		}
 	}
 
 	if !isClean {
@@ -160,17 +173,14 @@ func (tp *TargetProcessor) Run(targets []config.TargetConfig, isClean bool, verb
 		fmt.Printf("Found %d files, total size: %.2f MB, %d commands scheduled\n", len(allPaths), float64(totalSize)/(1024*1024), len(allCommands))
 		return nil
 	}
-	// ... (rest of the cleaner logic)
 
-	// Perform cleaning
-	if len(allPaths) > 0 {
-		fmt.Printf("\nCleaning %d files...\n", len(allPaths))
-		count, size, err := tp.cleaner.Clean(allPaths)
-		if err != nil {
-			return err
-		}
-		colorSuccess.Print("Clean Summary: ")
-		fmt.Printf("Deleted %d files, freed %.2f MB\n", count, float64(size)/(1024*1024))
+	// Final summary for clean mode
+	fmt.Printf("\n")
+	colorSuccess.Print("Clean Summary: ")
+	if tp.cleaner.DryRun() {
+		fmt.Printf("Would delete %d files, freeing %.2f MB\n", len(allPaths), float64(totalSize)/(1024*1024))
+	} else {
+		fmt.Printf("Deleted %d files, freed %.2f MB\n", len(allPaths), float64(totalSize)/(1024*1024))
 	}
 
 	for i, cmd := range allCommands {
