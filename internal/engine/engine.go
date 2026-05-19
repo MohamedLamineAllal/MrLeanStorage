@@ -13,25 +13,44 @@ import (
 
 // Hooks provides lifecycle callbacks for engine operations.
 type Hooks struct {
-	OnTargetScanStart func(name string, path string)
-	OnMatchFound      func(targetName string, files []string)
-	OnFileCleaned     func(path string, freed int64, err error)
+	OnTargetScanStart          func(name string, path string)
+	OnTargetScanEnd            func(name string, result *scanner.Result, err error)
+	OnFileCleaned              func(path string, freed int64, err error)
+	OnNoMatchesTargetCleanSkip func(name string)
+	OnTargetCleaned            func(name string)
+	BeforeHandleCommand        func(name string, command string, shouldExecuteCommand bool)
+	AfterHandleCommand         func(name string, command string, err error)
+	BeforeExecutingCommand     func(name string, command string)
+	AfterExecutingCommand      func(name string, command string, err error)
 }
 
 // Engine encapsulates the scanning and cleaning logic.
 type Engine struct {
-	scanner *scanner.Scanner
-	cleaner *cleaner.Cleaner
-	logger  *zap.Logger
+	scanner        *scanner.Scanner
+	cleaner        *cleaner.Cleaner
+	commandHandler *CommandHandler
+	logger         *zap.Logger
 }
 
 // New creates a new Engine instance.
 func New(logger *zap.Logger, ignorePatterns []string, dryRun bool) *Engine {
-	return &Engine{
+	e := &Engine{
 		scanner: scanner.New(logger, ignorePatterns),
 		cleaner: cleaner.New(logger, dryRun, ignorePatterns),
 		logger:  logger,
 	}
+	// Note: We'll initialize commandHandler separately or pass a scheduler if needed.
+	// For now, keeping it simple as per original design.
+	return e
+}
+
+// SetCommandHandler allows injecting the command handler.
+func (e *Engine) SetCommandHandler(ch *CommandHandler) {
+	e.commandHandler = ch
+}
+
+func (e *Engine) CommandHandler() *CommandHandler {
+	return e.commandHandler
 }
 
 // Scan performs parallel scanning of the provided targets.
@@ -57,11 +76,15 @@ func (e *Engine) Scan(targets []config.TargetConfig, hooks Hooks) (map[string]*s
 					SafetyLevel: t.SafetyLevel,
 					Type:        t.Type,
 				}
-				res, err := e.scanner.Scan(target, t.IgnorePatterns)
-
-				// Fire completion hook immediately after a target is processed
+				// Fire the OnTargetScanStart hook before scanning
 				if hooks.OnTargetScanStart != nil {
 					hooks.OnTargetScanStart(t.Name, t.Path)
+				}
+
+				res, err := e.scanner.Scan(target, t.IgnorePatterns)
+
+				if hooks.OnTargetScanEnd != nil {
+					hooks.OnTargetScanEnd(t.Name, res, err)
 				}
 
 				results <- struct {
@@ -72,7 +95,7 @@ func (e *Engine) Scan(targets []config.TargetConfig, hooks Hooks) (map[string]*s
 			}
 		}()
 	}
-// ...
+	// ...
 
 	for _, t := range targets {
 		if t.Command == "" {
@@ -99,14 +122,10 @@ func (e *Engine) Clean(resultMap map[string]*scanner.Result, targets []config.Ta
 	for _, t := range targets {
 		res, ok := resultMap[t.Name]
 		if !ok || len(res.Files) == 0 {
+			if hooks.OnNoMatchesTargetCleanSkip != nil {
+				hooks.OnNoMatchesTargetCleanSkip(t.Name)
+			}
 			continue
-		}
-
-		if hooks.OnTargetScanStart != nil {
-			hooks.OnTargetScanStart(t.Name, t.Path)
-		}
-		if hooks.OnMatchFound != nil {
-			hooks.OnMatchFound(t.Name, res.Files)
 		}
 
 		aggregator.Add(res.Files, res.FileSizes)
@@ -115,10 +134,37 @@ func (e *Engine) Clean(resultMap map[string]*scanner.Result, targets []config.Ta
 		if err != nil {
 			e.logger.Error("Clean failed", zap.String("target", t.Name), zap.Error(err))
 		}
+
+		if hooks.OnTargetCleaned != nil {
+			hooks.OnTargetCleaned(t.Name)
+		}
 	}
+
+	// Process commands
+	e.ProcessCommands(targets, hooks)
 
 	uniqueCount := len(aggregator.UniquePaths)
 	return uniqueCount, aggregator.totalSize, nil
+}
+
+// ProcessCommands executes commands associated with targets.
+func (e *Engine) ProcessCommands(targets []config.TargetConfig, hooks Hooks) {
+	if e.commandHandler == nil {
+		return
+	}
+
+	commandHooks := CommandHooks{
+		BeforeHandleCommand:    hooks.BeforeHandleCommand,
+		AfterHandleCommand:     hooks.AfterHandleCommand,
+		BeforeExecutingCommand: hooks.BeforeExecutingCommand,
+		AfterExecutingCommand:  hooks.AfterExecutingCommand,
+	}
+
+	for _, t := range targets {
+		if t.Command != "" {
+			e.commandHandler.Handle(t, commandHooks)
+		}
+	}
 }
 
 // ScanAndClean runs both Scan and Clean sequentially.

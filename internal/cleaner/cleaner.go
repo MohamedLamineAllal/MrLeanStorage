@@ -3,25 +3,11 @@ package cleaner
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"sync"
 
-	"github.com/fatih/color"
 	"go.uber.org/zap"
-)
-
-var (
-	// colorDryRun is used for displaying dry-run specific output.
-	colorDryRun = color.New(color.FgHiBlack, color.Italic)
-	// colorDelete is used for highlighting deletion actions.
-	colorDelete = color.New(color.FgRed)
-	// colorPath is used for displaying filesystem paths.
-	colorPath = color.New(color.FgBlue)
-	// colorCmd is used for displaying shell commands.
-	colorCmd = color.New(color.FgYellow)
 )
 
 // Cleaner handles the deletion of files and execution of cleanup commands.
@@ -141,7 +127,6 @@ func (c *Cleaner) Clean(paths []string, hook func(path string, freed int64, err 
 	return deletedCount, freedSpace, nil
 }
 
-
 // getDirSize calculates the total size of all non-ignored files within a directory recursively.
 func (c *Cleaner) getDirSize(path string) (int64, error) {
 	var size int64
@@ -169,27 +154,6 @@ func (c *Cleaner) getDirSize(path string) (int64, error) {
 		}
 	}
 	return size, nil
-}
-
-// ExecuteCommand runs a shell command unless dry-run mode is enabled.
-func (c *Cleaner) ExecuteCommand(command string) error {
-	if c.dryRun {
-		colorDryRun.Print("  [DRY RUN] ")
-		fmt.Print("Would execute command: ")
-		colorCmd.Println(command)
-		return nil
-	}
-
-	fmt.Print("  Executing command: ")
-	colorCmd.Println(command)
-	parts := strings.Fields(command)
-	cmd := exec.Command(parts[0], parts[1:]...)
-	err := cmd.Run()
-	if err != nil {
-		c.logger.Error("Failed to execute command", zap.String("command", command), zap.Error(err))
-		return err
-	}
-	return nil
 }
 
 // SetDryRun toggles the dry run mode of the Cleaner.

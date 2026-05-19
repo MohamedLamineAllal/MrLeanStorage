@@ -8,6 +8,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/mohamedlamineallal/MacosLeanStorage/internal/config"
 	"github.com/mohamedlamineallal/MacosLeanStorage/internal/engine"
+	"github.com/mohamedlamineallal/MacosLeanStorage/internal/scanner"
 	"github.com/mohamedlamineallal/MacosLeanStorage/internal/scheduler"
 	"github.com/schollz/progressbar/v3"
 	"go.uber.org/zap"
@@ -36,6 +37,8 @@ func (tp *TargetProcessor) Run(targets []config.TargetConfig, isClean bool, verb
 		defer logFile.Close()
 	}
 
+	tp.engine.SetCommandHandler(engine.NewCommandHandler(tp.engine, tp.scheduler, tp.logger))
+
 	var scanTargets []config.TargetConfig
 	for _, t := range targets {
 		if t.Command == "" {
@@ -51,15 +54,8 @@ func (tp *TargetProcessor) Run(targets []config.TargetConfig, isClean bool, verb
 	)
 
 	hooks := engine.Hooks{
-		OnTargetScanStart: func(name string, path string) {
+		OnTargetScanEnd: func(name string, result *scanner.Result, error error) {
 			scanBar.Add(1)
-		},
-		OnMatchFound: func(name string, files []string) {
-			if logFile != nil {
-				for _, file := range files {
-					fmt.Fprintf(logFile, "  [MATCH] %s (Target: %s)\n", file, name)
-				}
-			}
 		},
 		OnFileCleaned: func(path string, freed int64, err error) {
 			if err != nil {
@@ -88,7 +84,7 @@ func (tp *TargetProcessor) Run(targets []config.TargetConfig, isClean bool, verb
 		if !ok {
 			continue
 		}
-		
+
 		colorTarget.Printf("\nTarget: %s ", t.Name)
 		colorPath.Printf("(%s)\n", t.Path)
 		if len(res.Files) == 0 {
@@ -104,17 +100,58 @@ func (tp *TargetProcessor) Run(targets []config.TargetConfig, isClean bool, verb
 
 	uniqueCount, totalSize := 0, int64(0)
 	if isClean {
-		desc := "Cleaning targets..."
+		fmt.Printf("\n\n")
+		desc := "Cleaning and processing targets..."
 		if tp.engine.Cleaner().DryRun() {
-			desc = "[DRY RUN] Cleaning targets..."
+			desc = "[DRY RUN] Cleaning and processing targets..."
 		}
-		cleanBar := progressbar.NewOptions(len(scanTargets),
+		totalWork := len(targets)
+		cleanBar := progressbar.NewOptions(totalWork,
 			progressbar.OptionSetDescription(desc),
 			progressbar.OptionShowCount(),
 			progressbar.OptionSetTheme(progressbar.Theme{Saucer: "█", SaucerPadding: " ", BarStart: "[", BarEnd: "]"}),
 			progressbar.OptionSetPredictTime(false),
 		)
-		
+		hooks.OnTargetCleaned = func(name string) {
+			cleanBar.Add(1)
+		}
+		hooks.OnNoMatchesTargetCleanSkip = func(name string) {
+			cleanBar.Add(1)
+		}
+		hooks.AfterHandleCommand = func(name string, command string, err error) {
+			cleanBar.Add(1)
+		}
+		firstCommand := true
+		hooks.BeforeHandleCommand = func(name string, command string, shouldRunCommand bool) {
+			fmt.Printf("\n")
+			if firstCommand {
+				if tp.engine.Cleaner().DryRun() {
+					colorInfo.Printf("Processing commands Targets (DRY RUN):\n")
+				} else {
+					colorInfo.Printf("Processing commands Targets:\n")
+				}
+				firstCommand = false
+			}
+			colorTarget.Printf("Target: %s", name)
+			colorCommand.Printf(" (command: %s)\n", command)
+			if !shouldRunCommand {
+				colorInfo.Printf("Skipping command for target: %s (not scheduled to run yet)", name)
+			}
+		}
+		hooks.BeforeExecutingCommand = func(name string, command string) {
+			if tp.engine.Cleaner().DryRun() {
+				colorInfo.Printf("Executing Command (DRY RUN) for Target: %s", name)
+			} else {
+				colorTarget.Printf("Executing Command for Target: %s", name)
+			}
+			colorCommand.Printf(" (command: %s)\n", command)
+		}
+		hooks.AfterExecutingCommand = func(name string, command string, err error) {
+			if err != nil {
+				tp.logger.Error("Command failed", zap.String("target", name), zap.Error(err))
+			}
+		}
+
 		uniqueCount, totalSize, err = tp.engine.Clean(resultMap, targets, hooks)
 		cleanBar.Finish()
 		if err != nil {
@@ -129,12 +166,6 @@ func (tp *TargetProcessor) Run(targets []config.TargetConfig, isClean bool, verb
 	}
 
 	tp.printSummary(uniqueCount, totalSize, isClean, logPath)
-
-	for _, t := range targets {
-		if t.Command != "" {
-			tp.handleCommand(t)
-		}
-	}
 	return nil
 }
 
@@ -143,7 +174,7 @@ func (tp *TargetProcessor) printSummary(count int, size int64, isClean bool, log
 	if isClean {
 		colorSuccess.Print("Clean Summary: ")
 		if tp.engine.Cleaner().DryRun() {
-			fmt.Printf("Would delete %d files, freeing %.2f MB\n", count, float64(size)/(1024*1024))
+			fmt.Printf("[DRY RUN]: Would delete %d files, freeing %.2f MB\n", count, float64(size)/(1024*1024))
 		} else {
 			fmt.Printf("Deleted %d files, freeing %.2f MB\n", count, float64(size)/(1024*1024))
 		}
@@ -154,22 +185,5 @@ func (tp *TargetProcessor) printSummary(count int, size int64, isClean bool, log
 	if count > 0 {
 		fmt.Printf("Full log written to: ")
 		color.New(color.FgHiYellow, color.Underline).Println(logPath)
-	}
-}
-
-func (tp *TargetProcessor) handleCommand(t config.TargetConfig) {
-	fmt.Printf("\n")
-	colorTarget.Printf("Target: %s", t.Name)
-	colorCommand.Printf(" (command: %s)\n", t.Command)
-	if t.IntervalDays > 0 {
-		fmt.Printf("  Interval: %d days\n", t.IntervalDays)
-	} else {
-		fmt.Println("  Interval: Not scheduled")
-	}
-	if tp.scheduler.ShouldRunCommand(t.Name, t.IntervalDays) {
-		err := tp.engine.Cleaner().ExecuteCommand(t.Command)
-		if err == nil {
-			tp.scheduler.UpdateCommandRunTime(t.Name)
-		}
 	}
 }

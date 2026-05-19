@@ -16,9 +16,9 @@ type Task func() error
 // Scheduler handles the periodic execution of tasks and maintains state about task execution.
 // It uses a cron-based scheduling system and tracks the last run time to handle missed tasks.
 type Scheduler struct {
-	cron       *cron.Cron
-	logger     *zap.Logger
-	statePath  string
+	cron      *cron.Cron
+	logger    *zap.Logger
+	statePath string
 }
 
 // New creates a new Scheduler instance and initializes the state path for tracking task execution.
@@ -42,9 +42,10 @@ func (s *Scheduler) ShouldRunCommand(commandName string, intervalDays int) bool 
 	// Construct state path for the specific command name
 	statePath := filepath.Join(os.TempDir(), fmt.Sprintf("mls-cmd-%s.lastrun", commandName))
 	data, err := os.ReadFile(statePath)
+
 	if err != nil {
 		// If file doesn't exist, it's the first run, so allow it
-		return true 
+		return true
 	}
 
 	// Parse stored last run time

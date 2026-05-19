@@ -52,13 +52,3 @@ func TestCleanDryRun(t *testing.T) {
 	_, err = os.Stat(file1)
 	assert.NoError(t, err) // Should still exist
 }
-
-func TestExecuteCommand(t *testing.T) {
-	c := New(zap.NewNop(), true, nil) // Dry run mode
-	err := c.ExecuteCommand("echo hello")
-	assert.NoError(t, err)
-
-	c.SetDryRun(false)
-	err = c.ExecuteCommand("echo hello")
-	assert.NoError(t, err)
-}
