@@ -66,6 +66,7 @@ func (c *Cleaner) isIgnored(name string) bool {
 }
 
 // Clean deletes the provided list of file paths in parallel, invoking a hook for each file.
+// Clean deletes the provided list of file paths in parallel, invoking an optional hook for each path.
 func (c *Cleaner) Clean(paths []string, hook func(path string, freed int64, err error)) (int, int64, error) {
 	numWorkers := runtime.NumCPU()
 	pathChan := make(chan string, len(paths))
@@ -84,10 +85,9 @@ func (c *Cleaner) Clean(paths []string, hook func(path string, freed int64, err 
 			for path := range pathChan {
 				info, err := os.Stat(path)
 				if err != nil {
-					if hook != nil {
-						hook(path, 0, err)
+					if !os.IsNotExist(err) {
+						c.logger.Debug("Failed to stat path", zap.String("path", path), zap.Error(err))
 					}
-					c.logger.Debug("Failed to stat path", zap.String("path", path), zap.Error(err))
 					continue
 				}
 
@@ -98,12 +98,17 @@ func (c *Cleaner) Clean(paths []string, hook func(path string, freed int64, err 
 					size = info.Size()
 				}
 
+				prefix := ""
+				if c.dryRun {
+					prefix = "[DRY RUN] "
+				}
+				c.logToFile("%sDeleted: %s", prefix, path)
+
 				if !c.dryRun {
 					err = os.RemoveAll(path)
 					if err != nil {
-						c.logger.Error("Failed to delete", zap.String("path", path), zap.Error(err))
-						if hook != nil {
-							hook(path, 0, err)
+						if !os.IsNotExist(err) {
+							c.logger.Error("Failed to delete", zap.String("path", path), zap.Error(err))
 						}
 						continue
 					}
