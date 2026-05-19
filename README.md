@@ -83,6 +83,9 @@ mls agent install
 # Start the agent
 mls agent start
 
+# Restart the agent
+mls agent restart
+
 # Check agent status
 mls agent status
 

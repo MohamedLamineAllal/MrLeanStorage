@@ -49,11 +49,23 @@ var statusCmd = &cobra.Command{
 	},
 }
 
+var restartCmd = &cobra.Command{
+	Use:   "restart",
+	Short: "Restart the background agent",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if err := StopAgent(); err != nil {
+			return err
+		}
+		return StartAgent()
+	},
+}
+
 func init() {
 	agentCmd.AddCommand(installCmd)
 	agentCmd.AddCommand(uninstallCmd)
 	agentCmd.AddCommand(startCmd)
 	agentCmd.AddCommand(stopCmd)
 	agentCmd.AddCommand(statusCmd)
+	agentCmd.AddCommand(restartCmd)
 	rootCmd.AddCommand(agentCmd)
 }
