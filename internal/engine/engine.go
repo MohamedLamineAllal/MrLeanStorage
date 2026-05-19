@@ -49,45 +49,52 @@ type RunOptions struct {
 	Hooks   Hooks
 }
 
-// Run executes the full scan/clean pipeline.
-func (e *Engine) Run(targets []config.TargetConfig, opts RunOptions) (int, int64, error) {
-	e.cleaner.SetDryRun(opts.DryRun)
-
+// Scan orchestrates the parallel scanning of targets.
+func (e *Engine) Scan(targets []config.TargetConfig, hooks Hooks) (map[string]*scanner.Result, error) {
 	resultMap := e.ScanTargets(targets)
+
+	// Optional: fire hooks for each target scanned if needed
+	return resultMap, nil
+}
+
+// Clean executes the cleanup of identified scan results.
+func (e *Engine) Clean(resultMap map[string]*scanner.Result, targets []config.TargetConfig, hooks Hooks) (int, int64, error) {
 	aggregator := &ResultAggregator{uniquePaths: make(map[string]int64)}
 
 	for _, t := range targets {
-		if t.Command != "" {
-			continue
-		}
-
 		res, ok := resultMap[t.Name]
-		if !ok {
+		if !ok || len(res.Files) == 0 {
 			continue
 		}
 
-		if opts.Hooks.OnTargetScanStart != nil {
-			opts.Hooks.OnTargetScanStart(t.Name, t.Path)
+		if hooks.OnTargetScanStart != nil {
+			hooks.OnTargetScanStart(t.Name, t.Path)
 		}
-
-		if opts.Hooks.OnMatchFound != nil {
-			opts.Hooks.OnMatchFound(t.Name, res.Files)
+		if hooks.OnMatchFound != nil {
+			hooks.OnMatchFound(t.Name, res.Files)
 		}
 
 		aggregator.Add(res.Files, res.FileSizes)
 
-		if opts.IsClean && len(res.Files) > 0 {
-			// Refactor Clean to optionally accept a hook
-			_, _, err := e.cleaner.CleanWithHook(res.Files, opts.Hooks.OnFileCleaned)
-			if err != nil {
-				e.logger.Error("Clean failed", zap.String("target", t.Name), zap.Error(err))
-			}
+		_, _, err := e.cleaner.CleanWithHook(res.Files, hooks.OnFileCleaned)
+		if err != nil {
+			e.logger.Error("Clean failed", zap.String("target", t.Name), zap.Error(err))
 		}
 	}
 
 	uniqueCount := len(aggregator.uniquePaths)
 	return uniqueCount, aggregator.totalSize, nil
 }
+
+// ScanAndClean performs a full scan followed by a clean operation.
+func (e *Engine) ScanAndClean(targets []config.TargetConfig, hooks Hooks) (int, int64, error) {
+	resultMap, err := e.Scan(targets, hooks)
+	if err != nil {
+		return 0, 0, err
+	}
+	return e.Clean(resultMap, targets, hooks)
+}
+
 
 
 // ScanTargets processes multiple targets in parallel and returns scan results.
