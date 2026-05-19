@@ -28,3 +28,5 @@ Action: Added detailed architectural explanation of parallel execution safety to
 Action: Refactored target processing to deduplicate overlapping file paths using a map. Updated CLI summary to report unique file counts for accurate cleanup estimations. Verified integrity with size consistency tests.
 Action: Reordered execution flow to prioritize file-system scans before scheduled command execution. Added result deduplication across targets.
 Action: Optimized result deduplication using a new ResultAggregator abstraction. Added thread-safe file path tracking and improved memory efficiency.
+Action: Added comprehensive tests for ResultAggregator to cmd/aggregator_test.go covering deduplication and concurrency. Verified logic with tests.
+Action: Refactored Cleaner to use parallel worker pool for deletion. All cleanup tasks are now concurrent, significantly improving speed.

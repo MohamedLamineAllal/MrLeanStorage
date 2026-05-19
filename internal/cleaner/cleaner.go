@@ -5,7 +5,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
+	"sync"
 
 	"github.com/fatih/color"
 	"go.uber.org/zap"
@@ -63,49 +65,78 @@ func (c *Cleaner) isIgnored(name string) bool {
 	return false
 }
 
-// Clean deletes the provided list of file paths and returns the count of deleted items and freed space.
-// If dry-run is enabled, it only logs the actions without performing deletions.
+// Clean deletes the provided list of file paths in parallel.
 func (c *Cleaner) Clean(paths []string) (int, int64, error) {
-	var deletedCount int
-	var freedSpace int64
+	numWorkers := runtime.NumCPU()
+	pathChan := make(chan string, len(paths))
+	type result struct {
+		freed int64
+		err   error
+	}
+	resChan := make(chan result, len(paths))
+
+	var wg sync.WaitGroup
+	for i := 0; i < numWorkers; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for path := range pathChan {
+				info, err := os.Stat(path)
+				if err != nil {
+					c.logger.Debug("Failed to stat path", zap.String("path", path), zap.Error(err))
+					continue
+				}
+
+				var size int64
+				if info.IsDir() {
+					size, _ = c.getDirSize(path)
+				} else {
+					size = info.Size()
+				}
+
+				// Log to file always
+				prefix := ""
+				if c.dryRun {
+					prefix = "[DRY RUN] "
+				}
+				c.logToFile("%sWould delete: %s", prefix, path)
+
+				if !c.dryRun {
+					err = os.RemoveAll(path)
+					if err != nil {
+						c.logger.Error("Failed to delete", zap.String("path", path), zap.Error(err))
+						resChan <- result{0, err}
+						continue
+					}
+				}
+				resChan <- result{size, nil}
+			}
+		}()
+	}
 
 	for _, path := range paths {
-		info, err := os.Stat(path)
-		if err != nil {
-			c.logger.Debug("Failed to stat path", zap.String("path", path), zap.Error(err))
-			continue
-		}
+		pathChan <- path
+	}
+	close(pathChan)
 
-		// Calculate size before deletion for reporting accuracy
-		var size int64
-		if info.IsDir() {
-			size, _ = c.getDirSize(path)
-		} else {
-			size = info.Size()
-		}
+	// Wait for workers in a separate goroutine to close resChan
+	go func() {
+		wg.Wait()
+		close(resChan)
+	}()
 
-		// Log to audit file even in dry-run mode for post-scan analysis
-		prefix := ""
-		if c.dryRun {
-			prefix = "[DRY RUN] "
+	var deletedCount int
+	var freedSpace int64
+	for res := range resChan {
+		if res.err == nil {
+			deletedCount++
+			freedSpace += res.freed
 		}
-		c.logToFile("%sWould delete: %s", prefix, path)
-
-		// Perform deletion only if not in dry-run mode
-		if !c.dryRun {
-			err = os.RemoveAll(path)
-			if err != nil {
-				c.logger.Error("Failed to delete", zap.String("path", path), zap.Error(err))
-				continue
-			}
-		}
-
-		deletedCount++
-		freedSpace += size
 	}
 
 	return deletedCount, freedSpace, nil
 }
+
 
 // getDirSize calculates the total size of all non-ignored files within a directory recursively.
 func (c *Cleaner) getDirSize(path string) (int64, error) {
