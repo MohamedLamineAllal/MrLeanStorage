@@ -22,3 +22,4 @@ Tue May 19 12:10:49 +08 2026
 Tue May 19 12:12:49 +08 2026
  - Inline documentation pass complete. All tests passed.
 Action: Architected and implemented parallel target scanning using a worker pool in cmd/processor.go. Documented in docs/performance/PERFORMANCE.md and updated README.md.
+Action: Documented Go concurrency model and its application in mls in docs/performance/CONCURRENCY_EXPLAINED.md.
