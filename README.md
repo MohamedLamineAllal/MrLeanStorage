@@ -72,18 +72,26 @@ dry_run: true
 - **Command-based Cleanup**: Define a `command` field in your target (e.g., `command: "pnpm store prune"`) to run system-level cleanup tasks. `mls` persists the last run time in the system temporary directory and respects the `interval_days` setting to avoid frequent execution.
 
 
-## Testing
-Run the full test suite:
-```bash
-go test ./...
-```
+## Background Automation (macOS)
+`mls` can run automatically in the background using `launchd`.
 
-To run tests with the **Go Race Detector** (recommended for verifying concurrency safety):
+### Manage Background Agent
 ```bash
-go test -race ./...
-```
+# Install the agent
+mls agent install
 
-See [testing_report.md](./testing_report.md) for the latest test results.
+# Start the agent
+mls agent start
+
+# Check agent status
+mls agent status
+
+# Stop the agent
+mls agent stop
+
+# Uninstall the agent
+mls agent uninstall
+```
 
 ## License
 MIT
