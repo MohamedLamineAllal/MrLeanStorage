@@ -9,6 +9,7 @@ import (
 	"github.com/mohamedlamineallal/MacosLeanStorage/internal/config"
 	"github.com/mohamedlamineallal/MacosLeanStorage/internal/engine"
 	"github.com/mohamedlamineallal/MacosLeanStorage/internal/scheduler"
+	"github.com/schollz/progressbar/v3"
 	"go.uber.org/zap"
 )
 
@@ -28,15 +29,20 @@ func NewTargetProcessor(logger *zap.Logger, ignorePatterns []string, dryRun bool
 	}
 }
 
-// getHooks returns the standard logging hooks for the CLI.
-func (tp *TargetProcessor) getHooks(logFile *os.File) engine.Hooks {
-	return engine.Hooks{
+// Run executes the scanning and optional cleaning process.
+func (tp *TargetProcessor) Run(targets []config.TargetConfig, isClean bool, verbose bool) error {
+	logPath := filepath.Join(os.TempDir(), "mls-last-run.log")
+	logFile, err := os.OpenFile(logPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	if err != nil {
+		tp.logger.Error("Failed to create log file", zap.Error(err))
+	} else {
+		defer logFile.Close()
+	}
+
+	scanBar := progressbar.Default(-1, "Scanning targets")
+	hooks := engine.Hooks{
 		OnTargetScanStart: func(name string, path string) {
-			fmt.Printf("\n")
-			colorTarget.Printf("Target: %s", name)
-			fmt.Print(" (")
-			colorPath.Print(path)
-			fmt.Printf(")\n")
+			scanBar.Describe(fmt.Sprintf("Scanning: %s", name))
 		},
 		OnMatchFound: func(name string, files []string) {
 			if logFile != nil {
@@ -48,73 +54,65 @@ func (tp *TargetProcessor) getHooks(logFile *os.File) engine.Hooks {
 		OnFileCleaned: func(path string, freed int64, err error) {
 			if err != nil {
 				tp.logger.Error("Failed to delete", zap.String("path", path), zap.Error(err))
-				return
-			}
-			if logFile != nil {
+			} else if logFile != nil {
 				prefix := ""
 				if tp.engine.Cleaner().DryRun() {
 					prefix = "[DRY RUN] "
 				}
-				fmt.Fprintf(logFile, "%sWould delete: %s\n", prefix, path)
+				fmt.Fprintf(logFile, "%sDeleted: %s\n", prefix, path)
 			}
 		},
 	}
-}
 
-// Run executes the scanning and optional cleaning process.
-func (tp *TargetProcessor) Run(targets []config.TargetConfig, isClean bool, verbose bool) error {
-	var allCommands []string
-	var commandNames []string
-
-	logPath := filepath.Join(os.TempDir(), "mls-last-run.log")
-	logFile, err := os.OpenFile(logPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
-	if err != nil {
-		tp.logger.Error("Failed to create log file", zap.Error(err))
-	} else {
-		defer logFile.Close()
-	}
-
-	hooks := tp.getHooks(logFile)
-
-	// Scan phase
 	resultMap, err := tp.engine.Scan(targets, hooks)
+	scanBar.Finish()
 	if err != nil {
 		return err
 	}
 
-	// Iterate through targets to print scan summary per target
+	// Iterate through targets to print scan summary
 	for _, t := range targets {
 		if t.Command != "" {
-			tp.handleCommand(t, &allCommands, &commandNames)
+			tp.handleCommand(t, nil, nil)
 			continue
 		}
-
 		res, ok := resultMap[t.Name]
 		if !ok {
 			continue
 		}
 
+		colorTarget.Printf("\nTarget: %s ", t.Name)
+		colorPath.Printf("(%s)\n", t.Path)
 		if len(res.Files) == 0 {
-			fmt.Printf("\nTarget: %s - No files match cleanup criteria.", t.Name)
-			continue
-		}
-
-		if isClean {
-			fmt.Printf("\nTarget: %s - %d files will be processed, freeing %.2f MB", t.Name, len(res.Files), float64(res.TotalSize)/(1024*1024))
+			fmt.Println("  No files match cleanup criteria.")
 		} else {
-			fmt.Printf("\nTarget: %s - Found %d files, total size: %.2f MB", t.Name, len(res.Files), float64(res.TotalSize)/(1024*1024))
+			if isClean {
+				fmt.Printf("  %d files to delete, freeing %.2f MB\n", len(res.Files), float64(res.TotalSize)/(1024*1024))
+			} else {
+				fmt.Printf("  Found %d files, total size: %.2f MB\n", len(res.Files), float64(res.TotalSize)/(1024*1024))
+			}
+			if isClean && tp.engine.Cleaner().DryRun() {
+				for i, f := range res.Files {
+					if i >= 3 {
+						fmt.Println("    ...")
+						break
+					}
+					fmt.Printf("    [DRY RUN] delete: %s\n", f)
+				}
+			}
 		}
 	}
 
 	// Clean phase
 	if isClean {
+		cleanBar := progressbar.Default(-1, "Cleaning...")
 		uniqueCount, totalSize, err := tp.engine.Clean(resultMap, targets, hooks)
+		cleanBar.Finish()
 		if err != nil {
 			return err
 		}
 		tp.printSummary(uniqueCount, totalSize, isClean, logPath)
 	} else {
-		// Calculate final unique stats for scan only
 		aggregator := &engine.ResultAggregator{UniquePaths: make(map[string]int64)}
 		for _, res := range resultMap {
 			aggregator.Add(res.Files, res.FileSizes)
@@ -168,7 +166,11 @@ func (tp *TargetProcessor) handleCommand(t config.TargetConfig, allCommands *[]s
 		fmt.Println("  Interval: Not scheduled")
 	}
 	if tp.scheduler.ShouldRunCommand(t.Name, t.IntervalDays) {
-		*allCommands = append(*allCommands, t.Command)
-		*commandNames = append(*commandNames, t.Name)
+		if allCommands != nil {
+			*allCommands = append(*allCommands, t.Command)
+		}
+		if commandNames != nil {
+			*commandNames = append(*commandNames, t.Name)
+		}
 	}
 }
