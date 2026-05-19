@@ -29,7 +29,13 @@ func NewTargetProcessor(logger *zap.Logger, ignorePatterns []string, dryRun bool
 }
 
 func (tp *TargetProcessor) Run(targets []config.TargetConfig, isClean bool, verbose bool) error {
-	logPath := filepath.Join(os.TempDir(), "mls-last-run.log")
+	cacheDir, err := os.UserCacheDir()
+	if err != nil {
+		cacheDir = os.TempDir()
+	}
+	logDir := filepath.Join(cacheDir, "mls")
+	os.MkdirAll(logDir, 0755)
+	logPath := filepath.Join(logDir, "mls-last-run.log")
 	logFile, err := os.OpenFile(logPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
 	if err != nil {
 		tp.logger.Error("Failed to create log file", zap.Error(err))
