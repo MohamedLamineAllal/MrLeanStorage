@@ -2,6 +2,9 @@
 
 A high-performance storage cleanup tool for macOS, designed to safely and efficiently clean up large cache and temporary files.
 
+## Performance
+`mls` utilizes a parallel worker pool pattern to scan multiple cleanup targets concurrently, significantly reducing scan times, especially for deep directory trees and numerous cache locations. The scanning engine is optimized for high-throughput I/O and resource-efficient processing, ensuring maximum performance on modern multi-core systems.
+
 ## Features
 - **Safety First**: Defaults to dry-run mode. No files are deleted unless explicitly requested.
 - **Configurable**: Define targets and age thresholds in a simple YAML configuration.

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
+	"sync"
 	"time"
 
 	"github.com/mohamedlamineallal/MacosLeanStorage/internal/cleaner"
@@ -58,86 +60,92 @@ func (tp *TargetProcessor) Run(targets []config.TargetConfig, isClean bool, verb
 		tp.cleaner.SetLogFile(logFile)
 	}
 
-	for _, t := range targets {
-		// Handle command-based targets separately from file-system targets
-		if t.Command != "" {
-			fmt.Printf("\n")
-			colorTarget.Printf("Target: %s", t.Name)
-			colorCommand.Printf(" (command: %s)\n", t.Command)
-			if t.IntervalDays > 0 {
-				fmt.Printf("  Interval: %d days\n", t.IntervalDays)
-				runTime := "Ready"
-				statePath := filepath.Join(os.TempDir(), fmt.Sprintf("mls-cmd-%s.lastrun", t.Name))
-				data, err := os.ReadFile(statePath)
-				if err == nil {
-					lastRun, err := time.Parse(time.RFC3339, string(data))
-					if err == nil {
-						nextRun := lastRun.Add(time.Duration(t.IntervalDays) * 24 * time.Hour)
-						if time.Now().Before(nextRun) {
-							runTime = nextRun.Format("2006-01-02 15:04")
-						}
-					}
+	// Prepare for parallel execution using a worker pool
+	var wg sync.WaitGroup
+	numWorkers := runtime.NumCPU()
+	jobs := make(chan config.TargetConfig, len(targets))
+	// Buffered channel to collect scan results from workers
+	results := make(chan struct {
+		Config config.TargetConfig
+		Res    *scanner.Result
+		Err    error
+	}, len(targets))
+
+	// Start worker pool to process scanning jobs concurrently
+	for i := 0; i < numWorkers; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for t := range jobs {
+				target := scanner.Target{
+					Name:        t.Name,
+					Path:        t.Path,
+					Threshold:   time.Duration(t.Threshold) * 24 * time.Hour,
+					SafetyLevel: t.SafetyLevel,
+					Type:        t.Type,
 				}
-				fmt.Printf("  Next Run: %s\n", runTime)
-			} else {
-				fmt.Println("  Interval: Not scheduled")
+				res, err := tp.scanner.Scan(target, t.IgnorePatterns)
+				results <- struct {
+					Config config.TargetConfig
+					Res    *scanner.Result
+					Err    error
+				}{t, res, err}
 			}
-			// Check if scheduled command should execute based on its history
-			if tp.scheduler.ShouldRunCommand(t.Name, t.IntervalDays) {
-				allCommands = append(allCommands, t.Command)
-				commandNames = append(commandNames, t.Name)
-			}
-			continue
-		}
+		}()
+	}
 
-		// Convert config target to scanner-compatible target
-		target := scanner.Target{
-			Name:        t.Name,
-			Path:        t.Path,
-			Threshold:   time.Duration(t.Threshold) * 24 * time.Hour,
-			SafetyLevel: t.SafetyLevel,
-			Type:        t.Type,
-		}
 
-		// Execute scan
-		result, err := tp.scanner.Scan(target, t.IgnorePatterns)
-		if err != nil {
-			tp.logger.Error("Scan failed for target", zap.String("name", t.Name), zap.Error(err))
+	// Queue scan jobs, handle commands sequentially to avoid scheduler race conditions
+	for _, t := range targets {
+		if t.Command != "" {
+			tp.handleCommand(t, &allCommands, &commandNames)
+		} else {
+			jobs <- t
+		}
+	}
+	close(jobs)
+	wg.Wait()
+	close(results)
+
+	// Process aggregated results sequentially to maintain deterministic output order and logging logic
+	for res := range results {
+		if res.Err != nil {
+			tp.logger.Error("Scan failed for target", zap.String("name", res.Config.Name), zap.Error(res.Err))
 			continue
 		}
 
 		fmt.Printf("\n")
-		colorTarget.Printf("Target: %s", t.Name)
+		colorTarget.Printf("Target: %s", res.Config.Name)
 		fmt.Print(" (")
-		colorPath.Print(t.Path)
-		fmt.Printf(", type: %s)\n", t.Type)
+		colorPath.Print(res.Config.Path)
+		fmt.Printf(", type: %s)\n", res.Config.Type)
 
 		// Log matched files to audit file
-		if len(result.Files) > 0 && logFile != nil {
-			for _, file := range result.Files {
+		if len(res.Res.Files) > 0 && logFile != nil {
+			for _, file := range res.Res.Files {
 				fmt.Fprintf(logFile, "  [MATCH] %s\n", file)
 			}
 		}
 
 		// Display scan status to CLI
-		if len(result.Files) == 0 {
+		if len(res.Res.Files) == 0 {
 			fmt.Println("  No files match cleanup criteria.")
 		} else {
 			if isClean {
-				fmt.Printf("  %d files will be deleted, freeing %.2f MB\n", len(result.Files), float64(result.TotalSize)/(1024*1024))
+				fmt.Printf("  %d files will be deleted, freeing %.2f MB\n", len(res.Res.Files), float64(res.Res.TotalSize)/(1024*1024))
 			} else {
-				fmt.Printf("  Found %d files, total size: %.2f MB\n", len(result.Files), float64(result.TotalSize)/(1024*1024))
+				fmt.Printf("  Found %d files, total size: %.2f MB\n", len(res.Res.Files), float64(res.Res.TotalSize)/(1024*1024))
 			}
 		}
 
-		allPaths = append(allPaths, result.Files...)
-		totalSize += result.TotalSize
+		allPaths = append(allPaths, res.Res.Files...)
+		totalSize += res.Res.TotalSize
 
 		// Execute actual deletion if instructed
-		if isClean && len(result.Files) > 0 {
-			_, _, err := tp.cleaner.Clean(result.Files)
+		if isClean && len(res.Res.Files) > 0 {
+			_, _, err := tp.cleaner.Clean(res.Res.Files)
 			if err != nil {
-				tp.logger.Error("Clean failed for target", zap.String("name", t.Name), zap.Error(err))
+				tp.logger.Error("Clean failed for target", zap.String("name", res.Config.Name), zap.Error(err))
 			}
 		}
 	}
@@ -195,8 +203,33 @@ func (tp *TargetProcessor) Run(targets []config.TargetConfig, isClean bool, verb
 		colorSuccess.Print("LIVE\n")
 	}
 
-	fmt.Printf("\nFull log written to: ")
-	colorPath.Println(logPath)
-
 	return nil
+}
+
+func (tp *TargetProcessor) handleCommand(t config.TargetConfig, allCommands *[]string, commandNames *[]string) {
+	fmt.Printf("\n")
+	colorTarget.Printf("Target: %s", t.Name)
+	colorCommand.Printf(" (command: %s)\n", t.Command)
+	if t.IntervalDays > 0 {
+		fmt.Printf("  Interval: %d days\n", t.IntervalDays)
+		runTime := "Ready"
+		statePath := filepath.Join(os.TempDir(), fmt.Sprintf("mls-cmd-%s.lastrun", t.Name))
+		data, err := os.ReadFile(statePath)
+		if err == nil {
+			lastRun, err := time.Parse(time.RFC3339, string(data))
+			if err == nil {
+				nextRun := lastRun.Add(time.Duration(t.IntervalDays) * 24 * time.Hour)
+				if time.Now().Before(nextRun) {
+					runTime = nextRun.Format("2006-01-02 15:04")
+				}
+			}
+		}
+		fmt.Printf("  Next Run: %s\n", runTime)
+	} else {
+		fmt.Println("  Interval: Not scheduled")
+	}
+	if tp.scheduler.ShouldRunCommand(t.Name, t.IntervalDays) {
+		*allCommands = append(*allCommands, t.Command)
+		*commandNames = append(*commandNames, t.Name)
+	}
 }

@@ -21,3 +21,4 @@ Tue May 19 12:10:49 +08 2026
  - Started inline documentation pass.
 Tue May 19 12:12:49 +08 2026
  - Inline documentation pass complete. All tests passed.
+Action: Architected and implemented parallel target scanning using a worker pool in cmd/processor.go. Documented in docs/performance/PERFORMANCE.md and updated README.md.
