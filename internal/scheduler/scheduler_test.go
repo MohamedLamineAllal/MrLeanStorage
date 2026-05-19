@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mohamedlamineallal/MacosLeanStorage/internal/utils"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
@@ -38,7 +39,7 @@ func TestScheduler(t *testing.T) {
 func TestShouldRunCommand(t *testing.T) {
 	s := New(zap.NewNop())
 	commandName := "test-cmd"
-	statePath := filepath.Join(os.TempDir(), fmt.Sprintf("mls-cmd-%s.lastrun", commandName))
+	statePath := filepath.Join(utils.GetAppCacheDir(), fmt.Sprintf("mls-cmd-%s.lastrun", commandName))
 	os.Remove(statePath) // Ensure clean state
 	defer os.Remove(statePath)
 	
