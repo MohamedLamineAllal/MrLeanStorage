@@ -91,10 +91,10 @@ func (tp *TargetProcessor) Run(targets []config.TargetConfig, isClean bool, verb
 			} else {
 				fmt.Printf("  Found %d files, total size: %.2f MB\n", len(res.Files), float64(res.TotalSize)/(1024*1024))
 			}
-			if isClean && tp.engine.Cleaner().DryRun() {
+		if isClean && tp.engine.Cleaner().DryRun() && len(res.Files) > 0 {
 				for i, f := range res.Files {
 					if i >= 3 {
-						fmt.Println("    ...")
+						fmt.Printf("    ... (refer to %s for full details)\n", logPath)
 						break
 					}
 					fmt.Printf("    [DRY RUN] delete: %s\n", f)

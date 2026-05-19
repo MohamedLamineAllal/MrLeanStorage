@@ -102,7 +102,7 @@ func (c *Cleaner) Clean(paths []string, hook func(path string, freed int64, err 
 				if c.dryRun {
 					prefix = "[DRY RUN] "
 				}
-				c.logToFile("%sDeleted: %s", prefix, path)
+				c.logToFile("%sWould delete: %s", prefix, path)
 
 				if !c.dryRun {
 					err = os.RemoveAll(path)
