@@ -64,6 +64,26 @@ func (s *Scheduler) UpdateCommandRunTime(commandName string) {
 	_ = os.WriteFile(statePath, []byte(time.Now().Format(time.RFC3339)), 0644)
 }
 
+// GetNextRunTime calculates when a command will next be eligible to run.
+func (s *Scheduler) GetNextRunTime(commandName string, intervalDays int) (time.Time, error) {
+	if intervalDays <= 0 {
+		return time.Now(), nil
+	}
+
+	statePath := filepath.Join(os.TempDir(), fmt.Sprintf("mls-cmd-%s.lastrun", commandName))
+	data, err := os.ReadFile(statePath)
+	if err != nil {
+		return time.Now(), nil
+	}
+
+	lastRun, err := time.Parse(time.RFC3339, string(data))
+	if err != nil {
+		return time.Now(), nil
+	}
+
+	return lastRun.Add(time.Duration(intervalDays) * 24 * time.Hour), nil
+}
+
 // AddTask schedules a task to be executed according to a cron-style specification string.
 func (s *Scheduler) AddTask(spec string, task Task) error {
 	_, err := s.cron.AddFunc(spec, func() {

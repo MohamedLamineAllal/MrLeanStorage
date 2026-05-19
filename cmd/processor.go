@@ -122,22 +122,30 @@ func (tp *TargetProcessor) Run(targets []config.TargetConfig, isClean bool, verb
 			cleanBar.Add(1)
 		}
 		firstCommand := true
-		hooks.BeforeHandleCommand = func(name string, command string, shouldRunCommand bool) {
-			fmt.Printf("\n")
-			if firstCommand {
-				if tp.engine.Cleaner().DryRun() {
-					colorInfo.Printf("\nProcessing commands Targets (DRY RUN):\n\n")
-				} else {
-					colorInfo.Printf("\nProcessing commands Targets:\n\n")
-				}
-				firstCommand = false
+		for _, t := range targets {
+			if t.Command == "" {
+				continue
 			}
-			colorTarget.Printf("Target: %s", name)
-			colorCommand.Printf(" (command: %s)\n", command)
-			if !shouldRunCommand {
-				colorInfo.Printf("Skipping command for target: %s (not scheduled to run yet)", name)
+			t := t // capture loop variable
+			hooks.BeforeHandleCommand = func(name string, command string, shouldRunCommand bool) {
+				fmt.Printf("\n")
+				if firstCommand {
+					if tp.engine.Cleaner().DryRun() {
+						colorInfo.Printf("Processing commands Targets (DRY RUN):\n")
+					} else {
+						colorInfo.Printf("Processing commands Targets:\n")
+					}
+					firstCommand = false
+				}
+				colorTarget.Printf("Target: %s", name)
+				colorCommand.Printf(" (command: %s)\n", command)
+				if !shouldRunCommand {
+					nextRun, _ := tp.scheduler.GetNextRunTime(name, t.IntervalDays)
+					colorInfo.Printf("Skipping command for target: %s (next scheduled at: %s)", name, nextRun.Format("2006-01-02 15:04:05"))
+				}
 			}
 		}
+
 		hooks.BeforeExecutingCommand = func(name string, command string) {
 			if tp.engine.Cleaner().DryRun() {
 				colorInfo.Printf("Executing Command (DRY RUN) for Target: %s", name)
