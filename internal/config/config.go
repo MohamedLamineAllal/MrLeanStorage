@@ -253,7 +253,7 @@ ignore_patterns:
   - ".Spotlight-V100"
   - ".Trashes"
   - ".fseventsd"
-schedule: "0 0 * * *"
+schedule: "0 0 0 * * *"
 `
 	return os.WriteFile(path, []byte(defaultConfig), 0644)
 }
