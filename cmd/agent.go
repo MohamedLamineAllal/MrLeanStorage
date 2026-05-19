@@ -28,10 +28,15 @@ const (
 </plist>`
 )
 
+// getPlistPath returns the standard path for the agent's launchd plist file.
+func getPlistPath() string {
+	home, _ := os.UserHomeDir()
+	return filepath.Join(home, "Library/LaunchAgents", agentLabel+".plist")
+}
+
 // InstallAgent installs the background launch agent.
 func InstallAgent() error {
-	home, _ := os.UserHomeDir()
-	plistPath := filepath.Join(home, "Library/LaunchAgents", agentLabel+".plist")
+	plistPath := getPlistPath()
 	executable, err := os.Executable()
 	if err != nil {
 		return err
@@ -49,23 +54,22 @@ func InstallAgent() error {
 
 // UninstallAgent removes the background launch agent.
 func UninstallAgent() error {
-	home, _ := os.UserHomeDir()
-	plistPath := filepath.Join(home, "Library/LaunchAgents", agentLabel+".plist")
-	
+	plistPath := getPlistPath()
+
 	exec.Command("launchctl", "bootout", "gui/"+fmt.Sprint(os.Getuid()), plistPath).Run()
 	os.Remove(plistPath)
-	
+
 	fmt.Printf("Agent uninstalled.\n")
 	return nil
 }
+
 // StartAgent starts the background launch agent.
 func StartAgent() error {
-	home, _ := os.UserHomeDir()
-	plistPath := filepath.Join(home, "Library/LaunchAgents", agentLabel+".plist")
-	
+	plistPath := getPlistPath()
+
 	// Load the service first
 	exec.Command("launchctl", "load", plistPath).Run()
-	
+
 	cmd := exec.Command("launchctl", "kickstart", "-k", "gui/"+fmt.Sprint(os.Getuid())+"/"+agentLabel)
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to start agent: %w", err)
@@ -76,9 +80,8 @@ func StartAgent() error {
 
 // StopAgent stops the background launch agent.
 func StopAgent() error {
-	home, _ := os.UserHomeDir()
-	plistPath := filepath.Join(home, "Library/LaunchAgents", agentLabel+".plist")
-	
+	plistPath := getPlistPath()
+
 	cmd := exec.Command("launchctl", "bootout", "gui/"+fmt.Sprint(os.Getuid()), plistPath)
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to stop agent: %w", err)
