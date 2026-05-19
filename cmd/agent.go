@@ -84,13 +84,8 @@ func StartAgent() error {
 	// Load the service first
 	exec.Command("launchctl", "load", plistPath).Run()
 
-	// Use kickstart without blocking (-k) or just trigger it.
-	// Redirecting output to /dev/null prevents hanging if it waits for feedback.
-	cmd := exec.Command("launchctl", "kickstart", "-p", "gui/"+fmt.Sprint(os.Getuid())+"/"+agentLabel)
-	cmd.Stdout = nil
-	cmd.Stderr = nil
-
-	if err := cmd.Start(); err != nil {
+	cmd := exec.Command("launchctl", "kickstart", "-k", "gui/"+fmt.Sprint(os.Getuid())+"/"+agentLabel)
+	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to start agent: %w", err)
 	}
 	fmt.Printf("Agent started.\n")
