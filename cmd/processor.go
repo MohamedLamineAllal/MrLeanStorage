@@ -40,10 +40,16 @@ func (tp *TargetProcessor) Run(targets []config.TargetConfig, isClean bool, verb
 		defer logFile.Close()
 	}
 
-	scanBar := progressbar.Default(-1, "Scanning targets")
+	// Scan phase
+	scanBar := progressbar.NewOptions(len(targets), 
+		progressbar.OptionSetDescription("Scanning targets"),
+		progressbar.OptionShowCount(),
+		progressbar.OptionSetTheme(progressbar.Theme{Saucer: "█", SaucerPadding: " ", BarStart: "[", BarEnd: "]"}),
+	)
+	
 	hooks := engine.Hooks{
 		OnTargetScanStart: func(name string, path string) {
-			scanBar.Describe(fmt.Sprintf("Scanning: %s", name))
+			scanBar.Add(1)
 		},
 		OnMatchFound: func(name string, files []string) {
 			if logFile != nil {
@@ -70,6 +76,25 @@ func (tp *TargetProcessor) Run(targets []config.TargetConfig, isClean bool, verb
 	if err != nil {
 		return err
 	}
+
+	// Clean phase
+	if isClean {
+		desc := "Cleaning targets"
+		if tp.engine.Cleaner().DryRun() {
+			desc = "[DRY RUN] Cleaning"
+		}
+		cleanBar := progressbar.NewOptions(len(targets), 
+			progressbar.OptionSetDescription(desc),
+			progressbar.OptionShowCount(),
+			progressbar.OptionSetTheme(progressbar.Theme{Saucer: "█", SaucerPadding: " ", BarStart: "[", BarEnd: "]"}),
+		)
+
+		_, _, err := tp.engine.Clean(resultMap, targets, hooks)
+		cleanBar.Finish()
+		if err != nil {
+			return err
+		}
+		// ...
 
 	// Iterate through targets to print scan summary
 	for _, t := range targets {
@@ -125,20 +150,20 @@ func (tp *TargetProcessor) Run(targets []config.TargetConfig, isClean bool, verb
 	return nil
 }
 
-func (tp *TargetProcessor) printSummary(count int, size int64, isClean bool, logPath string) {
+func (tp *TargetProcessor) printSummary(matchCount int, size int64, isClean bool, logPath string) {
 	fmt.Printf("\n")
 	if isClean {
 		colorSuccess.Print("Clean Summary: ")
 		if tp.engine.Cleaner().DryRun() {
-			fmt.Printf("Would delete %d files, freeing %.2f MB\n", count, float64(size)/(1024*1024))
+			fmt.Printf("Would delete %d files, freeing %.2f MB\n", matchCount, float64(size)/(1024*1024))
 		} else {
-			fmt.Printf("Deleted %d files, freed %.2f MB\n", count, float64(size)/(1024*1024))
+			fmt.Printf("Deleted %d files, freed %.2f MB\n", matchCount, float64(size)/(1024*1024))
 		}
 	} else {
 		colorSuccess.Print("Summary: ")
-		fmt.Printf("Found %d unique files, total size estimation (approx): %.2f MB\n", count, float64(size)/(1024*1024))
+		fmt.Printf("Found %d unique files, total size estimation (approx): %.2f MB\n", matchCount, float64(size)/(1024*1024))
 	}
-	if count > 0 {
+	if matchCount > 0 {
 		fmt.Printf("Full log written to: ")
 		color.New(color.FgHiYellow, color.Underline).Println(logPath)
 	}
