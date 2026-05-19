@@ -58,7 +58,14 @@ func UninstallAgent() error {
 	fmt.Printf("Agent uninstalled.\n")
 	return nil
 }
+// StartAgent starts the background launch agent.
 func StartAgent() error {
+	home, _ := os.UserHomeDir()
+	plistPath := filepath.Join(home, "Library/LaunchAgents", agentLabel+".plist")
+	
+	// Load the service first
+	exec.Command("launchctl", "load", plistPath).Run()
+	
 	cmd := exec.Command("launchctl", "kickstart", "-k", "gui/"+fmt.Sprint(os.Getuid())+"/"+agentLabel)
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to start agent: %w", err)
