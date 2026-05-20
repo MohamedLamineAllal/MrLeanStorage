@@ -106,6 +106,23 @@ This is ideal for keeping your Mac lean without manual intervention.
 >
 > Always verify your target patterns using `mls scan` first before initiating background automation!
 
+### 5. Executing Custom Cleanup Commands
+
+Beyond deleting files, `mls` can execute arbitrary system commands to perform specialized cleanups (like pruning package manager caches). You can configure these in your `targets` using the `command` and `interval_days` properties.
+
+```yaml
+targets:
+  - name: "PNPM Global Pruning"
+    command: "pnpm store prune"
+    interval_days: 7  # Runs once every 7 days
+
+  - name: "NPM Cache Clean"
+    command: "npm cache clean --force"
+    interval_days: 30 # Runs once a month
+```
+
+`mls` automatically tracks the last execution time of each command in its local cache (`~/Library/Caches/mls`) and will only run the command if the specified interval has passed.
+
 ---
 
 ## ⏰ Background Automation

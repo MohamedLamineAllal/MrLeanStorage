@@ -157,3 +157,9 @@ instead
 ## Prompt: 2026-05-20
 this should be v0.1.6 right as i already did publish v0.1.5
 if i don't bump the version people will not get the latest ??
+
+## Prompt: 2026-05-20
+please update the documentation
+readme user guide
+
+to include a section about setting up cleaning commands in configuration, like npm and pnpm cache cleaning commands

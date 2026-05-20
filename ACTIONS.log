@@ -195,3 +195,8 @@ Action: Updated .github/workflows/ci.yml to use a matrix strategy running go bui
 - **Implementation:** 
     - Moved the cross-platform agent log features to a new [0.1.6] section in CHANGELOG.md.
     - Updated MEMORY.md to reflect the current development version as v0.1.6.
+
+### 2026-05-20
+- **Action:** Documented command-based cleanup targets in README and USER_GUIDE.
+- **Context:** User requested a dedicated section for setting up cleanup commands (e.g., npm/pnpm) in the configuration.
+- **Implementation:** Added a new section "Executing Custom Cleanup Commands" to README.md and expanded the "Command-based Targets" section in docs/USER_GUIDE.md with practical examples.

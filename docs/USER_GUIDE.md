@@ -143,16 +143,34 @@ The directory path to monitor. You can use standard file globbing.
 
 A list of directories to monitor or commands to execute.
 
+#### File-based Targets
 - `name`: A descriptive name for the target.
 - `path`: The absolute path or a home-relative path (using `~/`).
-- `command`: A system command to run (e.g., `pnpm store prune`).
-- `interval_days`: Minimum days to wait before running this command again. `mls` tracks the last execution time in a file inside the local application cache directory (e.g., `~/Library/Caches/mls/mls-cmd-<name>.lastrun`).
 - `threshold_days`: Items older than this many days will be targeted for cleanup.
 - `type`: Defines how the target should be cleaned. Available values:
   - `"file"` (default): Scans inside the path and deletes individual old files.
   - `"folder"`: Treats the matched path itself as the target. If the folder is old enough, the entire folder is deleted.
   - `"both"`: Deletes both old files inside and the folder itself if staleness criteria are met.
 - `safety_level`: (Reserved for future use) Intended to define how aggressive the cleanup should be.
+
+#### Command-based Targets (e.g., NPM, PNPM)
+`mls` can also execute system commands to clean up caches that are managed by other tools. This is particularly useful for package managers that have their own pruning logic.
+
+- `name`: A unique name for the command target.
+- `command`: The full system command to execute (e.g., `pnpm store prune` or `npm cache clean --force`).
+- `interval_days`: How often to run the command. `mls` tracks execution history in its local cache (`~/Library/Caches/mls/mls-cmd-<name>.lastrun`) to ensure it only runs once per interval.
+
+**Example Configuration:**
+```yaml
+targets:
+  - name: "PNPM Cache"
+    command: "pnpm store prune"
+    interval_days: 7
+
+  - name: "NPM Cache"
+    command: "npm cache clean --force"
+    interval_days: 30
+```
 
 ### `dry_run`
 
