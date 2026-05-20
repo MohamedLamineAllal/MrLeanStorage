@@ -89,5 +89,8 @@ To run tests with the **Go Race Detector** (recommended for verifying concurrenc
 go test -race ./...
 ```
 
+## Releases
+Refer to [docs/RELEASE_PROCESS.md](./docs/RELEASE_PROCESS.md) for information on versioning, release workflows, and binary distribution best practices.
+
 ## License
 MIT
