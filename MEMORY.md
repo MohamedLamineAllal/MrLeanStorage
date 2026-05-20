@@ -18,6 +18,8 @@
 - [x] Stats discrepancy audit: Analysis on scanned vs deleted stats (`docs/Stats_Counting.md`).
 - [x] Automated Releases: End-to-end multi-platform build and deployment setup using GitHub Actions and GoReleaser.
 - [x] Homebrew Integration: Setup and deployment via custom Tap `homebrew-mls` utilizing fine-grained PAT and quarantine-bypassing post-install hook.
+- [x] Cask Distribution Alignment: Resolved formula checksum mismatch, synchronized tap cache, and fully updated docs (INSTALL.md, USER_GUIDE.md, ARCHITECTURE.md, README.md) to reflect the GoReleaser v2 Cask standard.
+
 
 ## Core Project Documentation
 - [Cleanup Estimation Discrepancy Analysis](./docs/Stats_Counting.md)
