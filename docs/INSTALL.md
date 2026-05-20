@@ -2,16 +2,25 @@
 
 ## 1. From GitHub Releases (Pre-built Binaries)
 
-For a quick installation, download the pre-built binary for your platform from the [GitHub Releases page](https://github.com/MohamedLamineAllal/MrLeanStorage/releases).
+For a quick installation, download the pre-built binary for your platform from the [GitHub Releases page](https://github.com/MohamedLamineAllal/MacOSLeanStorage/releases).
 
-### macOS
+### macOS (Homebrew)
+If you have [Homebrew](https://brew.sh) installed, you can install `mls` by tapping our repository:
+
+```bash
+brew tap MohamedLamineAllal/mls
+brew install mls
+```
+
+### macOS (Manual)
 ```bash
 # Apple Silicon
-curl -sL https://github.com/MohamedLamineAllal/MrLeanStorage/releases/latest/download/mls_Darwin_arm64.tar.gz | tar xz -C /usr/local/bin mls
+curl -sL https://github.com/MohamedLamineAllal/MacOSLeanStorage/releases/latest/download/mls_Darwin_arm64.tar.gz | tar xz -C /usr/local/bin mls
 
 # Intel
-curl -sL https://github.com/MohamedLamineAllal/MrLeanStorage/releases/latest/download/mls_Darwin_amd64.tar.gz | tar xz -C /usr/local/bin mls
+curl -sL https://github.com/MohamedLamineAllal/MacOSLeanStorage/releases/latest/download/mls_Darwin_amd64.tar.gz | tar xz -C /usr/local/bin mls
 ```
+
 
 ### Linux (DEB/RPM)
 ```bash
