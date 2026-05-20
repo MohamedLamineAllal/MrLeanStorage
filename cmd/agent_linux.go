@@ -7,6 +7,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	"github.com/mohamedlamineallal/MrLeanStorage/internal/utils"
 )
 
 const (
@@ -18,6 +20,8 @@ After=network.target
 [Service]
 ExecStart=%s serve
 Restart=always
+StandardOutput=append:%s
+StandardError=append:%s
 
 [Install]
 WantedBy=default.target
@@ -38,6 +42,11 @@ func getUnitPath() (string, error) {
 	return filepath.Join(dir, serviceName+".service"), nil
 }
 
+// getLogPath returns the standard path for the agent's log file on Linux.
+func getLogPath() string {
+	return filepath.Join(utils.GetAppCacheDir(), "agent.log")
+}
+
 // InstallAgent installs the background agent as a systemd user service on Linux.
 func InstallAgent() error {
 	unitPath, err := getUnitPath()
@@ -50,7 +59,8 @@ func InstallAgent() error {
 		return fmt.Errorf("failed to get executable path: %w", err)
 	}
 
-	content := fmt.Sprintf(unitTemplate, executable)
+	logPath := getLogPath()
+	content := fmt.Sprintf(unitTemplate, executable, logPath, logPath)
 	if err := os.WriteFile(unitPath, []byte(content), 0644); err != nil {
 		return fmt.Errorf("failed to write service file: %w", err)
 	}
@@ -64,6 +74,7 @@ func InstallAgent() error {
 	}
 
 	fmt.Printf("Agent installed: %s\n", unitPath)
+	fmt.Printf("Agent logs redirected to: %s\n", logPath)
 	return nil
 }
 
@@ -116,4 +127,9 @@ func StatusAgent() error {
 	}
 	fmt.Printf("Agent status:\n%s\n", string(output))
 	return nil
+}
+
+// GetAgentLogPath returns the path to the background agent log file on Linux.
+func GetAgentLogPath() (string, error) {
+	return getLogPath(), nil
 }

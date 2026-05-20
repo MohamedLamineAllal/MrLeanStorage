@@ -29,6 +29,7 @@
 - [x] Purely Event-Driven Cross-Platform Config Reload: Refactored the config reload mechanism to be purely event-driven, removing all periodic file polling/tickers. Uses OS-native SIGHUP signaling on Unix (macOS/Linux) and an OS-allocated local loopback TCP port listener on Windows that blocks on Accept(), guaranteeing zero idle CPU and memory usage.
 - [x] Cross-Platform Agent Management: Implemented native background service management for macOS (launchd), Linux (systemd), and Windows (Scheduled Tasks). Split `agent.go` into platform-specific files (`agent_darwin.go`, `agent_windows.go`, `agent_linux.go`, and `agent_other.go`) and updated documentation to reflect cross-platform support.
 - [x] Agent Guidelines Update: Mandated append-only logging for `Prompts.log` and `ACTIONS.log` in `AGENTS.md` to ensure complete interaction history.
+- [x] Cross-Platform Agent Logs: Implemented `mls agent log` command with `--live` and `--path` support across macOS, Linux, and Windows. Updated background service definitions to redirect output to `agent.log`.
 
 
 ## Core Project Documentation

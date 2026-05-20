@@ -31,3 +31,8 @@ func StopAgent() error {
 func StatusAgent() error {
 	return fmt.Errorf("background agent is not supported on %s", runtime.GOOS)
 }
+
+// GetAgentLogPath returns an error indicating that the background agent is not supported on the current platform.
+func GetAgentLogPath() (string, error) {
+	return "", fmt.Errorf("background agent is not supported on %s", runtime.GOOS)
+}

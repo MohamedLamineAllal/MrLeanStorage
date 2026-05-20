@@ -137,3 +137,10 @@ Error: cmdeload_test.go:76:15: undefined: findMLSServePIDs
 Can you check that and fix it
 make sure to rigorously analyse it to one shot it. As we are on a macos.
 The output above is from github action running test on windows
+
+## Prompt: 2026-05-20
+ok i want to implement this feature
+i want it to be cross platform.
+i want mls agent log with --live --path
+live does show the log in real time
+Update doucmentation

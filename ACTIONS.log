@@ -161,3 +161,13 @@ Action: Updated .github/workflows/ci.yml to use a matrix strategy running go bui
 - **Action:** Fixed Windows test failure (undefined findMLSServePIDs).
 - **Context:** cmd/reload_test.go was using a Unix-only function and lacked build tags, causing failures on Windows.
 - **Implementation:** Split cmd/reload_test.go into cmd/reload_unix_test.go and cmd/reload_windows_test.go with appropriate build tags.
+
+### 2026-05-20
+- **Action:** Implemented cross-platform mls agent log command.
+- **Context:** User requested a way to view background agent logs with --live and --path flags across all supported platforms.
+- **Implementation:**
+    - Updated agent_darwin.go, agent_linux.go, and agent_windows.go to redirect stdout/stderr to agent.log in the app cache directory.
+    - Added GetAgentLogPath() helper to all platform-specific agent files.
+    - Implemented mls agent log subcommand in cmd/agent_cmd.go with support for real-time streaming via polling.
+    - Updated README.md and docs/USER_GUIDE.md to include the new command.
+- **Verification:** Built binary on macOS and verified mls agent log --path returns the correct directory.

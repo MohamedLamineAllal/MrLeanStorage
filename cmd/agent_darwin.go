@@ -9,12 +9,15 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	"github.com/mohamedlamineallal/MrLeanStorage/internal/utils"
 )
 
 const (
 	// agentLabel is the identifier used for the launchd service.
 	agentLabel = "com.mls.serve"
 	// agentPlist is the template for the launchd property list file.
+	// It includes StandardOutPath and StandardErrorPath for logging.
 	agentPlist = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -30,6 +33,10 @@ const (
     <true/>
     <key>KeepAlive</key>
     <true/>
+    <key>StandardOutPath</key>
+    <string>%s</string>
+    <key>StandardErrorPath</key>
+    <string>%s</string>
 </dict>
 </plist>`
 )
@@ -38,6 +45,11 @@ const (
 func getPlistPath() string {
 	home, _ := os.UserHomeDir()
 	return filepath.Join(home, "Library/LaunchAgents", agentLabel+".plist")
+}
+
+// getLogPath returns the standard path for the agent's log file.
+func getLogPath() string {
+	return filepath.Join(utils.GetAppCacheDir(), "agent.log")
 }
 
 // getAgentUninstallCommand returns the command to unload/bootout the agent from launchd.
@@ -53,12 +65,13 @@ func getAgentLoadCommand(plistPath string) *exec.Cmd {
 // InstallAgent installs the background launch agent, generates the plist, and loads it into launchd.
 func InstallAgent() error {
 	plistPath := getPlistPath()
+	logPath := getLogPath()
 	executable, err := os.Executable()
 	if err != nil {
 		return err
 	}
 
-	content := fmt.Sprintf(agentPlist, agentLabel, executable)
+	content := fmt.Sprintf(agentPlist, agentLabel, executable, logPath, logPath)
 	if err := os.WriteFile(plistPath, []byte(content), 0644); err != nil {
 		return err
 	}
@@ -68,6 +81,7 @@ func InstallAgent() error {
 		return fmt.Errorf("failed to load agent: %w", err)
 	}
 	fmt.Printf("Agent installed: %s\n", plistPath)
+	fmt.Printf("Agent logs redirected to: %s\n", logPath)
 	return nil
 }
 
@@ -123,4 +137,9 @@ func StatusAgent() error {
 	}
 	fmt.Printf("Agent status:\n%s\n", string(output))
 	return nil
+}
+
+// GetAgentLogPath returns the path to the background agent log file on Darwin.
+func GetAgentLogPath() (string, error) {
+	return getLogPath(), nil
 }

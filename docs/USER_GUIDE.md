@@ -97,6 +97,11 @@ mls agent start
 # Check background daemon status
 mls agent status
 
+# View background agent logs
+mls agent log          # Show last 20 lines
+mls agent log --live   # Stream logs in real-time
+mls agent log --path   # Show log file path
+
 # Restart / Hot reload configuration
 mls agent restart
 

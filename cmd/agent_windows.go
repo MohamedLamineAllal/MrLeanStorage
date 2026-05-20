@@ -6,17 +6,31 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
+
+	"github.com/mohamedlamineallal/MrLeanStorage/internal/utils"
 )
 
 const agentTaskName = "mls-agent"
 
+// getLogPath returns the standard path for the agent's log file on Windows.
+func getLogPath() string {
+	return filepath.Join(utils.GetAppCacheDir(), "agent.log")
+}
+
 // InstallAgent installs the background agent as a Windows Scheduled Task.
-// It configures the task to run at user logon.
+// It configures the task to run at user logon and redirect output to a log file.
 func InstallAgent() error {
 	executable, err := os.Executable()
 	if err != nil {
 		return err
 	}
+
+	logPath := getLogPath()
+	// Create a scheduled task that runs at logon.
+	// On Windows, schtasks doesn't natively support output redirection,
+	// so we wrap the command in a shell to handle redirection.
+	taskCmd := fmt.Sprintf("cmd /c \"\"%s\" serve >> \"%s\" 2>&1\"", executable, logPath)
 
 	// Create a scheduled task that runs at logon
 	// /create: Create a new task
@@ -24,12 +38,13 @@ func InstallAgent() error {
 	// /tr: Task Run (command)
 	// /sc: Schedule (onlogon)
 	// /f: Force (overwrite if exists)
-	cmd := exec.Command("schtasks", "/create", "/tn", agentTaskName, "/tr", fmt.Sprintf("\"%s\" serve", executable), "/sc", "onlogon", "/f")
+	cmd := exec.Command("schtasks", "/create", "/tn", agentTaskName, "/tr", taskCmd, "/sc", "onlogon", "/f")
 	if output, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("failed to install agent: %w (output: %s)", err, string(output))
 	}
 
 	fmt.Printf("Agent installed as scheduled task: %s\n", agentTaskName)
+	fmt.Printf("Agent logs redirected to: %s\n", logPath)
 	return nil
 }
 
@@ -76,4 +91,9 @@ func StatusAgent() error {
 	}
 	fmt.Printf("Agent status:\n%s\n", string(output))
 	return nil
+}
+
+// GetAgentLogPath returns the path to the background agent log file on Windows.
+func GetAgentLogPath() (string, error) {
+	return getLogPath(), nil
 }
