@@ -35,13 +35,14 @@ release:
   name_template: "Release {{ .Tag }}"
   header: |
     # MrLeanStorage {{ .Tag }}
-
+    
     A high-performance storage cleanup tool for macOS, designed to safely and efficiently clean up large cache and temporary files.
   footer: |
     ## Installation
     Download the binary for your platform, or install via package manager (deb/rpm) provided above.
-
+    
     See [README.md](https://github.com/MohamedLamineAllal/MrLeanStorage/blob/main/README.md) for installation and usage guides.
+
 brews:
   - repository:
       owner: MohamedLamineAllal
@@ -51,6 +52,4 @@ brews:
       email: goreleaser@mohamed.dev
     homepage: https://github.com/MohamedLamineAllal/MrLeanStorage
     description: High-performance storage cleanup tool
-    license: MIT
-
     license: MIT
