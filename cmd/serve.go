@@ -9,9 +9,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/mohamedlamineallal/MrLeanStorage/internal/cleaner"
 	"github.com/mohamedlamineallal/MrLeanStorage/internal/config"
-	"github.com/mohamedlamineallal/MrLeanStorage/internal/scanner"
+	"github.com/mohamedlamineallal/MrLeanStorage/internal/engine"
 	"github.com/mohamedlamineallal/MrLeanStorage/internal/scheduler"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
@@ -34,38 +33,51 @@ var serveCmd = &cobra.Command{
 
 		s := scheduler.New(logger)
 
-		// Define the core cleanup task
+		// Define the core cleanup task using the unified Engine orchestration
 		task := func() error {
 			logger.Info("Starting scheduled cleanup")
 
-			sc := scanner.New(logger, cfg.IgnorePatterns)
-			cl := cleaner.New(logger, false, cfg.IgnorePatterns) // Force dry_run to false for background execution to actually perform cleanup
+			// Initialize the default Engine and CommandHandler with dryRun = false
+			eng := engine.NewDefault(logger, cfg.IgnorePatterns, false)
+			ch := engine.NewCommandHandler(eng, s, logger)
+			eng.SetCommandHandler(ch)
 
-			var allPaths []string
-			// Collect paths from all configured targets
-			for _, t := range cfg.Targets {
-				target := scanner.Target{
-					Name:        t.Name,
-					Path:        t.Path,
-					Threshold:   time.Duration(t.Threshold) * 24 * time.Hour,
-					SafetyLevel: t.SafetyLevel,
-					Type:        t.Type,
-				}
-
-				result, err := sc.Scan(target, t.IgnorePatterns)
-				if err != nil {
-					logger.Error("Scan failed", zap.String("target", t.Name), zap.Error(err))
-					continue
-				}
-				allPaths = append(allPaths, result.Files...)
+			// Setup event-driven Hooks to log background execution progress
+			hooks := engine.Hooks{
+				OnTargetScanStart: func(name string, path string) {
+					logger.Info("Scanning target", zap.String("name", name), zap.String("path", path))
+				},
+				OnFileCleaned: func(path string, freed int64, err error) {
+					if err != nil {
+						logger.Error("Failed to delete file", zap.String("path", path), zap.Error(err))
+					} else {
+						logger.Info("Deleted file", zap.String("path", path), zap.Int64("freed_bytes", freed))
+					}
+				},
+				OnTargetCleaned: func(name string) {
+					logger.Info("Target cleaned successfully", zap.String("target", name))
+				},
+				OnNoMatchesTargetCleanSkip: func(name string) {
+					logger.Info("No files found to clean for target", zap.String("target", name))
+				},
+				BeforeExecutingCommand: func(name string, command string) {
+					logger.Info("Executing Command for Target", zap.String("target", name), zap.String("command", command))
+				},
+				AfterExecutingCommand: func(name string, command string, err error) {
+					if err != nil {
+						logger.Error("Command failed", zap.String("target", name), zap.String("command", command), zap.Error(err))
+					} else {
+						logger.Info("Command completed successfully", zap.String("target", name), zap.String("command", command))
+					}
+				},
 			}
 
-			// Execute cleanup if files were found
-			if len(allPaths) > 0 {
-				_, _, err := cl.Clean(allPaths, nil)
+			count, size, err := eng.ScanAndClean(cfg.Targets, hooks)
+			if err != nil {
 				return err
 			}
-			logger.Info("No files found to clean")
+
+			logger.Info("Scheduled cleanup finished", zap.Int("deleted_files_count", count), zap.Float64("freed_space_mb", float64(size)/(1024*1024)))
 			return nil
 		}
 

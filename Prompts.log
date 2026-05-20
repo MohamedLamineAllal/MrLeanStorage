@@ -76,3 +76,6 @@ User wants to force `mls serve` (and background agent) to always run with `dry_r
 
 ## Prompt: 2026-05-20 (Correction: dry_run: false)
 User corrected/confirmed that the background serve daemon should run in active deletion mode (`dry_run: false`).
+
+## Prompt: 2026-05-20 (Refactor serveCmd to use engine)
+User requested to refactor the background cleanup daemon in `cmd/serve.go` to use the unified `engine.ScanAndClean()` instead of the manual/sequential loop.
