@@ -46,7 +46,8 @@ release:
     See [README.md](https://github.com/MohamedLamineAllal/MrLeanStorage/blob/main/README.md) for installation and usage guides.
 
 homebrew_casks:
-  - repository:
+  - name: mls
+    repository:
       owner: MohamedLamineAllal
       name: homebrew-mls
     commit_author:
@@ -61,4 +62,5 @@ homebrew_casks:
           if OS.mac?
             system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/mls"]
           end
+
 
