@@ -34,7 +34,7 @@ cd /tmp && rm -rf mls-build
 ```
 
 ### From GitHub Releases (Pre-built)
-*Coming soon: Pre-built binaries will be available in the GitHub Releases section.*
+You can download pre-built binaries for your platform directly from the [GitHub Releases page](https://github.com/MohamedLamineAllal/MacOSLeanStorage/releases).
 
 ## Usage
 
