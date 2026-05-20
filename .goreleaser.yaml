@@ -36,3 +36,13 @@ release:
   github:
     owner: MohamedLamineAllal
     name: MacOSLeanStorage
+  name_template: "Release {{ .Tag }}"
+  header: |
+    # MacosLeanStorage {{ .Tag }}
+    
+    A high-performance storage cleanup tool for macOS, designed to safely and efficiently clean up large cache and temporary files.
+  footer: |
+    ## Installation
+    Download the binary for your platform, or install via package manager (deb/rpm) provided above.
+    
+    See [README.md](https://github.com/MohamedLamineAllal/MacOSLeanStorage/blob/main/README.md) for installation and usage guides.
