@@ -66,6 +66,13 @@ targets:
 dry_run: true
 ```
 
+Check the examples on [Configuration Examples](./docs/configuration/Examples/).
+
+- [Extensive Configuration](./docs/configuration/Examples/Extensive.yml)
+  - Extensive and growing, we update it from time to time. (It's what the author is using for his own use case)
+- [Default configuration](./docs/configuration/Examples/default.yml)
+  - The Default configuration if you don't set yours (Updated with time)
+
 ### Configuration Patterns
 - The tool supports standard file globbing.
 - **Recursive Globbing**: Use the `**` pattern to match directories recursively (e.g., `~/Library/Application Support/MyApp/**/Cache/*`). This is powered by the `doublestar` library.
