@@ -53,8 +53,8 @@ brews:
       name: homebrew-mls
     commit_author:
       name: goreleaserbot
-      email: goreleaser@mohamed.dev
+      email: themagiciandev6@gmail.com
     homepage: https://github.com/MohamedLamineAllal/MrLeanStorage
-    description: High-performance storage cleanup tool
+    description: Lean High-performance storage cleanup tool with custom configuration
     license: MIT
 
