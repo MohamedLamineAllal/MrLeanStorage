@@ -1,6 +1,6 @@
 # MrLeanStorage (mls)
 
-`mls` is a high-performance, concurrent storage cleanup tool for macOS (with cross-platform support for Linux and Windows), designed to safely and efficiently reclaim disk space. Written in Go, it features a small memory footprint, a seamless user experience, and a built-in background daemon.
+`mls` (MrLeanStorage) is a high-performance cleaning tool with a low memory footprint, written in Go, designed to safely and efficiently reclaim disk space. Out of the box, `mls` comes with a default configuration that makes it incredibly easy to get started, and is highly extensible so you can easily adapt and extend it to fit your custom cleanup needs. You can also explore the configuration examples provided in this repository to customize your rules.
 
 ---
 
@@ -12,6 +12,12 @@
 - **📦 Application Cache Migration**: State files (e.g., last-run logs) are safely persisted under the persistent local cache (`~/Library/Caches/mls`) rather than the volatile `/tmp` directory.
 - **🛡️ Dry-Run Safety**: Defaults to a strict dry-run mode so you can preview exactly which files will be deleted before taking any destructive action.
 - **🤖 launchd Background Integration**: Complete agent management CLI to install, start, stop, restart, and inspect background services seamlessly on macOS.
+
+---
+
+## 📖 User Guide
+
+For detailed explanations of all features, custom scheduling options, command execution targets, and tips for safe cleanup, consult our comprehensive [User Guide](./docs/USER_GUIDE.md).
 
 ---
 
@@ -35,7 +41,7 @@ brew install mls
 
 ### Linux & Windows
 
-For Debian/Ubuntu (`.deb`), RedHat/Fedora (`.rpm`), or Windows manual installations, please refer to the [Installation Guide](./docs/INSTALL.md#2-linux-pre-built-packages).
+For Debian/Ubuntu (`.deb`), RedHat/Fedora (`.rpm`), or Windows manual installations, please refer to the [Installation Guide](./docs/INSTALL.md#2-linux-pre-built-packages-manual-binary).
 
 ---
 
@@ -109,6 +115,29 @@ mls agent uninstall
 
 ---
 
+## 🖥️ Multi-platform Support
+
+`mls` is designed to be cross-platform and should work on macOS, Linux, and Windows. However, we are currently focusing our development efforts primarily on macOS. With time, we plan to improve and expand support for other platforms.
+
+Please note that the background agent management commands (`mls agent ...`) are currently supported **only on macOS**. We will update this section as support for background services on other platforms is implemented.
+
+The rest of the commands should work on all platforms:
+
+- `mls scan`: Scans targets for files and directories to clean based on your configuration.
+- `mls clean`: Scan and deletes files and directories identified during the scan.
+- `mls serve`: Starts the background scheduler loop to perform automated cleanup. You can use it with CLI on any platform, you can set it up as a daemon, or start when the system start.
+- `mls config open`: Opens the configuration file in your default system editor.
+  - (Works only on MacOS, we will update this for cross platform)
+- `mls config reveal`: Reveals the configuration file location in your file explorer.
+  - (Works only on MacOS, we will update this for cross platform)
+- `mls config reload`: Signals the running `mls serve` daemon to reload its configuration.
+  - (Works only on Macos, we will update this for cross platform)
+  - Stop `mls serve` and start it again to reload.
+
+If you don't want to wait for the Daemon support on other platforms you can setup yours, with `mls serve`. Ask `gemini` or `gpt` for how to set up a daemon on linux or windows for `mls serve` command. `mls serve` will handle the rest for you.
+
+---
+
 ## 🛠️ Configuration Example
 
 The `~/.MrLeanStorage.yaml` configuration uses simple and flexible YAML format:
@@ -148,7 +177,17 @@ targets:
     interval_days: 7 # Run this command target once every 7 days
 ```
 
-Check [docs/configuration/Examples/](./docs/configuration/Examples/) for extensive config references.
+---
+
+## 📂 Configuration Examples & Community Sharing
+
+We provide default and advanced configuration templates to assist you:
+- [Extensive Configuration](./docs/configuration/Examples/Extensive.yml)
+  - Extensive and growing, we update it from time to time. (It's what the author is using for his own use case)
+- [Default configuration](./docs/configuration/Examples/default.yml)
+  - The Default configuration if you don't set yours (Updated with time)
+
+We highly encourage and accept community-submitted configuration templates! If you have constructed a custom setup that you'd like to share with other users, please feel free to submit a [Pull Request (PR)](https://github.com/MohamedLamineAllal/MrLeanStorage/pulls). We are always happy to review, merge, and feature new configuration examples into this repository.
 
 ---
 

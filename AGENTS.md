@@ -22,6 +22,7 @@ Every prompt interaction must strictly follow the **Research -> Strategy -> Exec
 - **Do not modify files blindly.** If the user asks for analysis, **only read files and write the analysis**—never modify source files or make structural changes under an analysis request.
 - **Zero-Regression Safeguard:** Never delete, disable, or alter existing CLI commands, utilities, or configuration options unless explicitly requested. Always review git diffs carefully.
 - **Staging Protection:** Respect the user's workspace state. Do not run commands that reset or destroy staged changes or wipe out working directory progress.
+- **Documentation Updates & Preservation:** When updating documentation, never delete or remove useful information or context. Just add to, refine, or enhance the language. If you believe some information has become completely obsolete and should be removed, do not delete it silently. Instead, explicitly prompt the Developer to review the proposed deletion and provide them with clear, detailed reasoning for why that specific detail should be removed.
 
 ### Step 4: Verification & Testing
 - **Test Before Complete:** You must build the binaries (`go build -o mls main.go`) and run the test suite (`go test -race ./...`) after every change.

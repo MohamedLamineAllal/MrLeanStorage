@@ -1,7 +1,8 @@
 # MrLeanStorage User Guide
 
 ## Introduction
-MrLeanStorage (mls) is a command-line tool designed to help macOS users reclaim storage space by cleaning up old cache and temporary files. It specifically targets directories that tend to grow large over time, such as browser caches and developer tool temporary files.
+MrLeanStorage (`mls`) is a high-performance cleanup tool with a low memory footprint, written in Go, designed to help macOS and cross-platform users safely reclaim storage space by cleaning up old cache and temporary files. It specifically targets directories that tend to grow large over time, such as browser caches and developer tool temporary files. `mls` comes out of the box with an easy-to-use custom configuration structure, starting with a sensible default configuration file that is highly extensible. You can easily extend it to fit your needs, and explore the configuration examples provided in our repository for advanced setups.
+
 
 ## Getting Started
 
@@ -111,6 +112,13 @@ A cron expression (e.g., `"0 0 * * *"`) defining when the automated cleanup shou
 1.  **Always scan first**: Before running `clean`, run `scan` to see what files are being targeted.
 2.  **Start with high thresholds**: Set `threshold_days` to a higher value (e.g., 30) and gradually decrease it as you gain confidence.
 3.  **Use Descriptive Names**: Help yourself by naming targets clearly (e.g., "Arc Browser Cache").
+
+## Configuration Examples & Sharing
+We provide both standard and extensive configuration presets to assist you:
+- [Default Configuration](file:///Users/mohamedlamineallal/repos/MacosLeanStorage/docs/configuration/Examples/default.yml) — The basic config file created automatically on first startup.
+- [Extensive Configuration](file:///Users/mohamedlamineallal/repos/MacosLeanStorage/docs/configuration/Examples/Extensive.yml) — An exhaustive list of targets that you can reference or copy from.
+
+We highly encourage sharing your custom config profiles! If you have built an optimized cleanup configuration, please share it by submitting a [Pull Request (PR)](https://github.com/MohamedLamineAllal/MrLeanStorage/pulls). We accept and merge configuration templates from our community.
 
 ## Troubleshooting
 If `mls` fails to delete a file, it might be because the file is currently in use by another application. Close the application and try again.

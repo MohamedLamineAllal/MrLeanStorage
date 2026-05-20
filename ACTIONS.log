@@ -79,3 +79,13 @@ Action: Answered query regarding how to check model quotas in the Antigravity CL
 ## Action: 2026-05-20 (Homebrew installation checksum mismatch)
 Action: Analyzed and resolved the Homebrew formula checksum mismatch issue. Synchronized the local Homebrew tap `/opt/homebrew/Library/Taps/mohamedlamineallal/homebrew-mls` by pulling the latest remote commits, which removed the outdated, placeholder-based `mls.rb` Formula and properly positioned `mls` as a Cask (`Casks/mls.rb`).
 
+## Action: 2026-05-20 (Refine documentation, add dynamic release installation & PR submission details)
+Action: Enriched documentation across the project:
+1. Updated AGENTS.md with a strict rule prohibiting silent deletion of useful documentation.
+2. Restored the Multi-platform Support section and the default/extensive configuration descriptions in README.md.
+3. Added links to USER_GUIDE.md in README.md.
+4. Refined descriptions to emphasize high-performance, low memory footprint, and custom extensibility in Go.
+5. Added community Pull Request (PR) contribution guidelines and links under the examples section.
+6. Rewrote docs/INSTALL.md to dynamically query the GitHub Releases API for Linux and Windows downloads.
+
+
