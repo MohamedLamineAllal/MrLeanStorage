@@ -43,7 +43,7 @@ release:
     
     See [README.md](https://github.com/MohamedLamineAllal/MrLeanStorage/blob/main/README.md) for installation and usage guides.
 
-brews:
+homebrew_tap:
   - repository:
       owner: MohamedLamineAllal
       name: homebrew-mls
