@@ -1,6 +1,133 @@
+## Prompt: 2024-05-24
+Continue the documentation pass.
+
+### Remaining from Batch 1:
+- cmd/processor.go
+- cmd/colors.go
+
+### Batch 2:
+- internal/scanner/scanner.go
+- internal/cleaner/cleaner.go
+- internal/config/config.go
+- internal/scheduler/scheduler.go
+
+### Objective
+Add GoDoc-compliant comments to all public AND private functions, types, methods, and significant variables in each file. Comments should be concise but descriptive, explaining both "what" the code does and the "why" (intent).
+
+Ensure you use Go conventions (e.g., `// TypeName represents...`, `// MethodName does...`).
+Refer to `AGENTS.md` for standards.
+Tue May 19 12:10:49 +08 2026
+ - Inline documentation pass on scanner, cleaner, processor, and scheduler.
+
+## Prompt: 2026-05-19
+1. Analyze and refactor scan/clean engine performance.
+2. Implement single-pass scanner traversal.
+3. Refactor Clean to parallel worker pool.
+4. Add rigorous test suite with -race.
+5. Standardize config files (Extensive.yml/default.yml/config.go).
+6. Fix cron scheduling (6 fields).
+7. Migrate storage from /tmp to persistent cache directory (~/Library/Caches/mls).
+8. Implement agent management (install, start, stop, status, uninstall, restart).
+9. Add 30-min missed task catch-up ticker.
+10. Implement config reload via SIGHUP.
+11. Standardize logs and documentation.
+
+## Prompt: 2026-05-19 (Late session)
+1. Fix syntax error in cmd/agent.go.
+2. Centralize plistPath management in getPlistPath helper.
+3. Consolidate launchctl commands into helpers.
+4. Revert non-blocking kickstart change; restore original blocking behavior.
+5. Analyze sleep/wake scheduling reliability and cron drift.
+6. Implement 30-minute missed-task catch-up ticker in cmd/serve.go.
+7. Implement mls config reload (SIGHUP) in cmd/serve.go and cmd/config.go.
+8. Restore missing config open and reveal commands.
+9. Standardize Extensive.yml with titles and consistency.
+10. Systematically document the codebase file-by-file with GoDoc comments.
+11. Audit and standardize storage persistence.
+
+## Prompts: Gemini CLI Session (May 19 - May 20, 2026)
+1. Optimize scanning and cleaning performance: Implement single-pass directory scanner traversal and parallelize cleanup using a goroutine worker pool.
+2. Build a rigorous testing suite with `-race` race detector for `engine.go` and `command_handler.go` to assert execution order and hooks.
+3. Validate cron/scheduler syntax to expect exactly 6 fields (adding seconds granularity) and address cron sleep/wake drift.
+4. Eliminate hardcoded `/tmp` usage by migrating all temporary file persistence to local application caches under `~/Library/Caches/mls`.
+5. Develop full macOS background automation for the server: `mls agent install`, `start`, `stop`, `status`, `restart`, and `uninstall` utilizing `launchctl`.
+6. Implement a 30-minute missed-task catch-up ticker in the server daemon to handle cron runs missed while the Mac is asleep.
+7. Support hot-reloading configurations gracefully upon receiving `SIGHUP` signal.
+8. Restore missing command features like `mls config open` and `mls config reveal`.
+9. Perform a full audit of cleanup statistics and resolve discrepancies where scanned size differed from deleted size (written to `docs/Stats_Counting.md`).
+10. Systematically apply GoDoc comments across the entire codebase.
+11. Set up CI/CD with GitHub Actions (`release.yml`) and GoReleaser. Configure it to build binaries for macOS/Linux/Windows.
+12. Establish distribution via a custom Homebrew Tap (`homebrew-mls`). Migrate deprecated `brews` block to the newer `homebrew_casks` layout, bypassing macOS quarantine via post-install xattr script, and set up granular GitHub Personal Access Token authentication.
+
+## Prompt: 2026-05-20 (Agy session)
+how can i check models quotas in antigravity ?
+
+## Prompt: 2026-05-20 (Homebrew installation checksum mismatch)
+User reports that running "brew install mls --formula" fails with checksum verification error:
+Error: Formula reports different checksum:  replace_with_sha256_hash
+       SHA-256 checksum of downloaded file: c4c2ff0701f59f1535bd7478db2e9d384c099ba79ded22c1f78aebe97d7348b5
+Why is this and how can we fix this?
+
+## Prompt: 2026-05-20 (Refine README, docs user guide, and INSTALL.md)
+User wants to refine README.md, docs/ USER_GUIDE.md, and update docs/INSTALL.md to reflect the latest Homebrew Cask installation changes for macOS and Linux.
+
+## Prompt: 2026-05-20 (Force dry_run: false in mls serve and add warning callouts)
+User wants to force `mls serve` (and background agent) to always run with `dry_run: false` (actually deleting files), ignoring the global `dry_run` configuration. Additionally, add warning callouts in README.md and docs/USER_GUIDE.md about this behavior.
+
+## Prompt: 2026-05-20 (Correction: dry_run: false)
+User corrected/confirmed that the background serve daemon should run in active deletion mode (`dry_run: false`).
+
+## Prompt: 2026-05-20 (Refactor serveCmd to use engine)
+User requested to refactor the background cleanup daemon in `cmd/serve.go` to use the unified `engine.ScanAndClean()` instead of the manual/sequential loop.
+
+## Prompt: 2026-05-20 (Fix config reload command and PID lookup)
+User reported that running `./mls config reload` failed with an invalid syntax error from `strconv.Atoi` when multiple `mls serve` processes are running (e.g. manual serve and background launchd). Additionally, the help menu displayed upon runtime failures was confusing.
+
+## Prompt: 2026-05-20 (Fix serve exit on SIGHUP config reload)
+User reported that after sending the SIGHUP signal (dynamic configuration reload) to the active `mls serve` processes, the process exited with no message instead of hot-reloading and remaining running.
+
+## Prompt: 2026-05-20 (Enforce single-instance mls serve)
+User requested to ensure only a single instance of `mls serve` can run at any given time. If another process is already running, the new process should print a message stating that it is already running and exit cleanly.
+
+## Prompt: 2026-05-20 (Cross-platform config open and reveal)
+User requested to add robust cross-platform support to `mls config open` and `mls config reveal` to allow operating natively on macOS, Linux, and Windows.
+
+## Prompt: 2026-05-20 (Update docs for cross-platform config open/reveal)
+User requested to update the documentation (README.md and USER_GUIDE.md) to remove the macOS-only limitation note for `mls config open` and `mls config reveal`, marking them as fully cross-platform.
+
+## Prompt: 2026-05-20 (Update AGENTS.md prompt logging rule)
+please update AGENTS.md to make sure prompts.log should log the prompts exactly as the user prompt them
+
+## Prompt: 2026-05-20 (Cross-platform config reload)
+Can we make sure mls config reload is cross platform
+
+## Prompt: 2026-05-20 (Resuming from compaction)
+Continue
+
+## Prompt: 2026-05-20 (Commit and test reload + CI platforms)
+Awesome
+please commit this current changes
+Then after that
+please build tests for this
+
+Also for the github workflow, is there a way to make sure tests run in different platforms
+(including windows) or this is not possible on github actions
+
+## Prompt: 2026-05-20 (Resume - share thoughts on CI platforms)
+resume
+And please tell me what you think first
+
+## Prompt: 2026-05-20
 Can we make mls agent (install, uninstall, start, stop, status) cross platform
+
+## Prompt: 2026-05-20
 Update the architecture documentation
 Explain what we are using for each feature and why it's best option
 if not best option, what are potential better solution than that.
 High performance high quality
+
+## Prompt: 2026-05-20
 please update MEMORY, prompts log actions log and commit
+
+## Prompt: 2026-05-20
+update AGENTS.md to instruct clearly that logs are append only.
