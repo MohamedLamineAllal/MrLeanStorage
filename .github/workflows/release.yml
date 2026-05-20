@@ -10,14 +10,28 @@ permissions:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    name: Test (${{ matrix.os }})
+    strategy:
+      # Run all platforms even if one fails, to get a full picture
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+
     steps:
       - uses: actions/checkout@v4
+
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: 1.26
-      - name: Run Tests
+          go-version: "1.26.2"
+
+      - name: Build
+        run: go build ./...
+
+      - name: Run Tests (with race detector)
+        # The -race flag requires CGO. On Windows, the runner ships with
+        # MinGW-w64 which provides the gcc compiler CGO needs.
         run: go test -race ./...
 
   goreleaser:
