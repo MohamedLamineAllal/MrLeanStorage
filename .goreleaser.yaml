@@ -41,9 +41,20 @@ release:
   header: |
     # MrLeanStorage {{ .Tag }}
 
-    A high-performance storage cleanup tool for macOS, designed to safely and efficiently clean up large cache and files with your easy to setup custom configuration and paths pattern selection.
+    A cross-platform high-performance storage cleanup tool for macOS, Linux, and Windows, designed to safely and efficiently clean up large cache and files with your easy to setup custom configuration and paths pattern selection.
   footer: |
-    See [README.md](https://github.com/MohamedLamineAllal/MrLeanStorage/blob/main/README.md) for installation and usage guides.
+    - See [README.md](https://github.com/MohamedLamineAllal/MrLeanStorage/blob/main/README.md) for installation and usage guides.
+    - See [CHANGELOG.md](https://github.com/MohamedLamineAllal/MrLeanStorage/blob/main/CHANGELOG.md) for a full history of changes.
+
+changelog:
+  use: github
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+      - "merge"
 
 homebrew_casks:
   - name: mls

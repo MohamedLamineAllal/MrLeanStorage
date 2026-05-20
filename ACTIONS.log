@@ -171,3 +171,11 @@ Action: Updated .github/workflows/ci.yml to use a matrix strategy running go bui
     - Implemented mls agent log subcommand in cmd/agent_cmd.go with support for real-time streaming via polling.
     - Updated README.md and docs/USER_GUIDE.md to include the new command.
 - **Verification:** Built binary on macOS and verified mls agent log --path returns the correct directory.
+
+### 2026-05-20
+- **Action:** Updated CHANGELOG.md and optimized GoReleaser release automation.
+- **Context:** User requested a comprehensive changelog update and best practices for dynamic release notes in GoReleaser.
+- **Implementation:**
+    - Updated CHANGELOG.md to include all releases from v0.1.0 to the upcoming v0.1.5.
+    - Configured .goreleaser.yaml to use GitHub's native changelog generation with specific filters (excluding docs, tests, and chores from the release description).
+    - Updated release header and footer to point to the official CHANGELOG.md.
