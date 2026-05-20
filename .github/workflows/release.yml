@@ -1,0 +1,26 @@
+name: Release
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+        go: [1.26]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ matrix.go }}
+      - name: Build
+        run: go build -o mls main.go
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: mls-${{ matrix.os }}
+          path: mls
