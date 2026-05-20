@@ -15,15 +15,10 @@ builds:
 
 archives:
   - id: default
-    ids:
-      - mls
-    formats:
-      - tar.gz
     name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
     format_overrides:
       - goos: windows
-        formats:
-          - zip
+        format: zip
 
 nfpms:
   - id: mls
@@ -35,9 +30,7 @@ nfpms:
     formats:
       - deb
       - rpm
-    contents:
-      - src: '{{ .Binary }}'
-        dst: /usr/local/bin/mls
+    bindir: /usr/local/bin
 
 release:
   github:
@@ -51,7 +44,7 @@ release:
   footer: |
     See [README.md](https://github.com/MohamedLamineAllal/MrLeanStorage/blob/main/README.md) for installation and usage guides.
 
-homebrew_casks:
+brews:
   - repository:
       owner: MohamedLamineAllal
       name: homebrew-mls
