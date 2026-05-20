@@ -21,6 +21,7 @@
 - [x] Cask Distribution Alignment: Resolved formula checksum mismatch, synchronized tap cache, and fully updated docs (INSTALL.md, USER_GUIDE.md, ARCHITECTURE.md, README.md) to reflect the GoReleaser v2 Cask standard.
 - [x] Active Background Deletion Mode: Configured the background scheduler (`mls serve` / `mls agent`) to always run in active deletion mode (`dry_run: false`) regardless of global configuration settings. Added highly visible warning callouts in the README.md and USER_GUIDE.md.
 - [x] Background Engine Alignment: Refactored the background serve daemon (`cmd/serve.go`) to utilize the unified orchestration `Engine.ScanAndClean()`, adding support for concurrent scanning/deletion, results deduplication, and execution of system command targets on schedule.
+- [x] Multi-PID Config Reload & Silenced CLI Usage: Enhanced config reload command to support signaling multiple active serve processes and silenced confusing Cobra CLI usage menus on all runtime/operational errors globally.
 
 
 ## Core Project Documentation

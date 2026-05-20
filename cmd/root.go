@@ -27,6 +27,7 @@ var rootCmd = &cobra.Command{
 large cache and temporary files on macOS.
 
 It focuses on performance, safety (dry-run by default), and multi-profile support.`,
+	SilenceUsage: true,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

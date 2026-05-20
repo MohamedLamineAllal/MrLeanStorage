@@ -79,3 +79,6 @@ User corrected/confirmed that the background serve daemon should run in active d
 
 ## Prompt: 2026-05-20 (Refactor serveCmd to use engine)
 User requested to refactor the background cleanup daemon in `cmd/serve.go` to use the unified `engine.ScanAndClean()` instead of the manual/sequential loop.
+
+## Prompt: 2026-05-20 (Fix config reload command and PID lookup)
+User reported that running `./mls config reload` failed with an invalid syntax error from `strconv.Atoi` when multiple `mls serve` processes are running (e.g. manual serve and background launchd). Additionally, the help menu displayed upon runtime failures was confusing.
