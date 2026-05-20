@@ -101,6 +101,7 @@ mls agent status
 mls agent log          # Show last 20 lines
 mls agent log --live   # Stream logs in real-time
 mls agent log --path   # Show log file path
+mls agent log --open   # Open logs in default editor
 
 # Restart / Hot reload configuration
 mls agent restart

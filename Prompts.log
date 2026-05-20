@@ -149,3 +149,7 @@ Update doucmentation
 please update the change log to resume every release done so far
 Also how can i make sure the release description will reflect the newer version
 ?? What is the best practice
+
+## Prompt: 2026-05-20
+it should be mls agent log --open
+instead

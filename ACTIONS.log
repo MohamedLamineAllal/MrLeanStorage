@@ -179,3 +179,12 @@ Action: Updated .github/workflows/ci.yml to use a matrix strategy running go bui
     - Updated CHANGELOG.md to include all releases from v0.1.0 to the upcoming v0.1.5.
     - Configured .goreleaser.yaml to use GitHub's native changelog generation with specific filters (excluding docs, tests, and chores from the release description).
     - Updated release header and footer to point to the official CHANGELOG.md.
+
+### 2026-05-20
+- **Action:** Refactored mls agent log open subcommand to --open flag.
+- **Context:** User requested a more consistent flag-based approach for the log command.
+- **Implementation:**
+    - Modified cmd/agent_cmd.go to remove logOpenCmd subcommand.
+    - Added --open flag to logCmd.
+    - Updated documentation (README.md, USER_GUIDE.md, CHANGELOG.md) to reflect the flag-based usage.
+- **Verification:** Built binary on macOS and verified mls agent log --open trigger.

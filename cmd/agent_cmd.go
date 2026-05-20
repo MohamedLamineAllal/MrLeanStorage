@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/mohamedlamineallal/MrLeanStorage/internal/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -59,6 +60,7 @@ var logCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		pathOnly, _ := cmd.Flags().GetBool("path")
 		live, _ := cmd.Flags().GetBool("live")
+		open, _ := cmd.Flags().GetBool("open")
 
 		logPath, err := GetAgentLogPath()
 		if err != nil {
@@ -72,6 +74,10 @@ var logCmd = &cobra.Command{
 
 		if _, err := os.Stat(logPath); os.IsNotExist(err) {
 			return fmt.Errorf("agent log file does not exist yet: %s", logPath)
+		}
+
+		if open {
+			return utils.OpenPath(logPath)
 		}
 
 		if live {
@@ -109,6 +115,7 @@ var restartCmd = &cobra.Command{
 func init() {
 	logCmd.Flags().Bool("path", false, "Show the path to the agent log file")
 	logCmd.Flags().Bool("live", false, "Stream the agent log in real-time")
+	logCmd.Flags().Bool("open", false, "Open the agent log file in the default system editor")
 
 	agentCmd.AddCommand(installCmd)
 	agentCmd.AddCommand(uninstallCmd)
