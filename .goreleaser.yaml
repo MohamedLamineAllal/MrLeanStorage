@@ -14,22 +14,19 @@ builds:
       - arm64
 
 archives:
-  # Standard tar.gz archives for Linux and macOS
   - id: default
-    goos:
-      - linux
-      - darwin
+    # Applies to your 'mls' build target defined above
+    ids:
+      - mls
+    # Tarball is default, but we declare it cleanly
     formats:
       - tar.gz
     name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
-
-  # Separate archive configuration to cleanly output .zip files for Windows
-  - id: windows-zip
-    goos:
-      - windows
-    formats:
-      - zip
-    name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+    # This replaces the broken 'goos' filter blocks
+    # It converts the archive output format specifically for Windows
+    format_overrides:
+      - goos: windows
+        format: zip
 
 nfpms:
   - id: mls
