@@ -137,3 +137,4 @@ Action: Proceeding with event-driven cross-platform configuration reload refacto
 
 ## Action: 2026-05-20 (Commit, test reload, and CI platforms)
 Action: Started stage and commit of the native configuration reload refactoring. Designing comprehensive cross-platform unit tests for startReloadListener and reloadProcesses to fully validate behavior. Preparing response on GitHub Actions cross-platform runners.
+Status: Completed. Created cmd/reload_test.go with TestStartReloadListenerAndProcesses and TestFindMLSServePIDs. All tests built and passed successfully with -race. Committed the tests.
