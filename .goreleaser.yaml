@@ -42,8 +42,7 @@ release:
     Download the binary for your platform, or install via package manager (deb/rpm) provided above.
 
     See [README.md](https://github.com/MohamedLamineAllal/MrLeanStorage/blob/main/README.md) for installation and usage guides.
-
-homebrew_tap:
+brews:
   - repository:
       owner: MohamedLamineAllal
       name: homebrew-mls
@@ -51,5 +50,7 @@ homebrew_tap:
       name: goreleaserbot
       email: goreleaser@mohamed.dev
     homepage: https://github.com/MohamedLamineAllal/MrLeanStorage
-    description: High-performance storage cleanup tool with custom configuration
+    description: High-performance storage cleanup tool
+    license: MIT
+
     license: MIT
