@@ -1,3 +1,6 @@
+// Package scheduler provides task scheduling capabilities based on cron-like patterns.
+// It includes mechanisms to track the last run time of tasks and catch up on missed executions
+// following extended periods of inactivity (e.g., system sleep or downtime).
 package scheduler
 
 import (
@@ -23,17 +26,19 @@ type Scheduler struct {
 }
 
 // New creates a new Scheduler instance and initializes the state path for tracking task execution.
+// It uses cron with second-level precision.
 func New(logger *zap.Logger) *Scheduler {
 	s := &Scheduler{
 		cron:   cron.New(cron.WithSeconds()),
 		logger: logger,
 	}
+	// Global last-run state file path
 	s.statePath = filepath.Join(utils.GetAppCacheDir(), "mls-global.lastrun")
 	return s
 }
 
 // ShouldRunCommand determines if a command should be executed based on its name and configured interval.
-// It checks a state file to see when the command was last run.
+// It checks a command-specific state file to see when the command was last run.
 func (s *Scheduler) ShouldRunCommand(commandName string, intervalDays int) bool {
 	if intervalDays <= 0 {
 		return true
@@ -43,14 +48,17 @@ func (s *Scheduler) ShouldRunCommand(commandName string, intervalDays int) bool 
 	data, err := os.ReadFile(statePath)
 
 	if err != nil {
+		// If state file doesn't exist, assume it's the first run
 		return true
 	}
 
+	// Parse stored last run time
 	lastRun, err := time.Parse(time.RFC3339, string(data))
 	if err != nil {
 		return true
 	}
 
+	// Compare elapsed time against the configured interval
 	return time.Since(lastRun) >= time.Duration(intervalDays)*24*time.Hour
 }
 
@@ -60,7 +68,7 @@ func (s *Scheduler) UpdateCommandRunTime(commandName string) {
 	_ = os.WriteFile(statePath, []byte(time.Now().Format(time.RFC3339)), 0644)
 }
 
-// GetNextRunTime calculates when a command will next be eligible to run.
+// GetNextRunTime calculates when a command will next be eligible to run based on the configured interval.
 func (s *Scheduler) GetNextRunTime(commandName string, intervalDays int) (time.Time, error) {
 	if intervalDays <= 0 {
 		return time.Now(), nil
@@ -91,7 +99,7 @@ func (s *Scheduler) AddTask(spec string, task Task) error {
 	return nil
 }
 
-// executeTask runs the provided task, logs its execution, and updates the last run state on success.
+// executeTask runs the provided task, logs its execution, and updates the global last run state on success.
 func (s *Scheduler) executeTask(task Task) {
 	s.logger.Info("Executing scheduled task")
 	if err := task(); err != nil {
@@ -103,11 +111,11 @@ func (s *Scheduler) executeTask(task Task) {
 }
 
 // CheckForMissedTasks evaluates if a scheduled task was missed (e.g., computer was off) and runs it if necessary.
-// It considers a task missed if the last run was more than 23 hours ago.
+// It considers a task missed if the last run was more than 23 hours ago (accounting for drift).
 func (s *Scheduler) CheckForMissedTasks(task Task) {
 	data, err := os.ReadFile(s.statePath)
 	if err != nil {
-		return // No previous run state
+		return // No previous run state found
 	}
 
 	lastRun, err := time.Parse(time.RFC3339, string(data))
@@ -115,14 +123,14 @@ func (s *Scheduler) CheckForMissedTasks(task Task) {
 		return
 	}
 
-	// If it has been more than 23 hours, consider it missed (allowing for drift)
+	// Trigger catch-up if the last successful run occurred more than 23 hours ago.
 	if time.Since(lastRun) > 23*time.Hour {
 		s.logger.Info("Missed scheduled task detected, catching up...", zap.Time("last_run", lastRun))
 		s.executeTask(task)
 	}
 }
 
-// Start begins the scheduler's execution loop.
+// Start begins the scheduler's background cron execution loop.
 func (s *Scheduler) Start() {
 	s.cron.Start()
 }

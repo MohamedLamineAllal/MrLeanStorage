@@ -1,3 +1,5 @@
+// Package cmd implements the CLI commands for MacosLeanStorage.
+// It provides the entry point for the "serve" command which runs the cleanup agent.
 package cmd
 
 import (
@@ -32,6 +34,7 @@ var serveCmd = &cobra.Command{
 
 		s := scheduler.New(logger)
 
+		// Define the core cleanup task
 		task := func() error {
 			logger.Info("Starting scheduled cleanup")
 
@@ -39,6 +42,7 @@ var serveCmd = &cobra.Command{
 			cl := cleaner.New(logger, cfg.DryRun, cfg.IgnorePatterns)
 
 			var allPaths []string
+			// Collect paths from all configured targets
 			for _, t := range cfg.Targets {
 				target := scanner.Target{
 					Name:        t.Name,
@@ -56,6 +60,7 @@ var serveCmd = &cobra.Command{
 				allPaths = append(allPaths, result.Files...)
 			}
 
+			// Execute cleanup if files were found
 			if len(allPaths) > 0 {
 				_, _, err := cl.Clean(allPaths, nil)
 				return err
@@ -64,6 +69,7 @@ var serveCmd = &cobra.Command{
 			return nil
 		}
 
+		// Schedule the task and handle missed executions
 		err = s.AddTask(cfg.Schedule, task)
 		if err != nil {
 			return err
@@ -76,14 +82,15 @@ var serveCmd = &cobra.Command{
 		colorSuccess.Printf("Scheduler started with schedule: %s\n", cfg.Schedule)
 		fmt.Println("Press Ctrl+C to stop")
 
-		// Wait for interruption
+		// Setup signal handling for graceful shutdown and configuration reloading
 		sigChan := make(chan os.Signal, 1)
 		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 
-		// Periodic check for missed tasks every 30 minutes
+		// Periodic check for missed tasks (e.g., wake from sleep) every 30 minutes
 		ticker := time.NewTicker(30 * time.Minute)
 		defer ticker.Stop()
 
+		// Background loop for signal handling and catch-up ticker
 		go func() {
 			for {
 				select {
@@ -106,6 +113,7 @@ var serveCmd = &cobra.Command{
 			}
 		}()
 
+		// Block until shutdown signal
 		<-sigChan
 
 		colorWarning.Println("\nStopping scheduler...")

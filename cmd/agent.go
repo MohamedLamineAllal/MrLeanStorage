@@ -1,3 +1,5 @@
+// Package cmd implements the CLI commands for MacosLeanStorage.
+// It includes logic for background agent management using launchd and CLI configuration.
 package cmd
 
 import (
@@ -8,7 +10,9 @@ import (
 )
 
 const (
+	// agentLabel is the identifier used for the launchd service.
 	agentLabel = "com.mls.serve"
+	// agentPlist is the template for the launchd property list file.
 	agentPlist = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -28,23 +32,23 @@ const (
 </plist>`
 )
 
-// getPlistPath returns the standard path for the agent's launchd plist file.
+// getPlistPath returns the standard path for the agent's launchd plist file in the user's Library.
 func getPlistPath() string {
 	home, _ := os.UserHomeDir()
 	return filepath.Join(home, "Library/LaunchAgents", agentLabel+".plist")
 }
 
-// getAgentUninstallCommand returns the command to unload/bootout the agent.
+// getAgentUninstallCommand returns the command to unload/bootout the agent from launchd.
 func getAgentUninstallCommand(plistPath string) *exec.Cmd {
 	return exec.Command("launchctl", "bootout", "gui/"+fmt.Sprint(os.Getuid()), plistPath)
 }
 
-// getAgentLoadCommand returns the command to load the agent.
+// getAgentLoadCommand returns the command to load the agent into launchd.
 func getAgentLoadCommand(plistPath string) *exec.Cmd {
 	return exec.Command("launchctl", "load", plistPath)
 }
 
-// InstallAgent installs the background launch agent.
+// InstallAgent installs the background launch agent, generates the plist, and loads it into launchd.
 func InstallAgent() error {
 	plistPath := getPlistPath()
 	executable, err := os.Executable()
@@ -57,6 +61,7 @@ func InstallAgent() error {
 		return err
 	}
 
+	// Load the newly created plist file
 	if err := getAgentLoadCommand(plistPath).Run(); err != nil {
 		return fmt.Errorf("failed to load agent: %w", err)
 	}
@@ -64,10 +69,11 @@ func InstallAgent() error {
 	return nil
 }
 
-// UninstallAgent removes the background launch agent.
+// UninstallAgent removes the background launch agent, unloads it, and deletes the plist file.
 func UninstallAgent() error {
 	plistPath := getPlistPath()
 
+	// Unload the service before removing the file
 	if err := getAgentUninstallCommand(plistPath).Run(); err != nil {
 		return fmt.Errorf("failed to uninstall agent: %w", err)
 	}
@@ -77,13 +83,14 @@ func UninstallAgent() error {
 	return nil
 }
 
-// StartAgent starts the background launch agent.
+// StartAgent triggers the background launch agent to run using the launchctl kickstart command.
 func StartAgent() error {
 	plistPath := getPlistPath()
 
-	// Load the service first
+	// Load the service if it's not currently loaded
 	exec.Command("launchctl", "load", plistPath).Run()
 
+	// Kickstart the service
 	cmd := exec.Command("launchctl", "kickstart", "-k", "gui/"+fmt.Sprint(os.Getuid())+"/"+agentLabel)
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to start agent: %w", err)
@@ -92,11 +99,11 @@ func StartAgent() error {
 	return nil
 }
 
-
-// StopAgent stops the background launch agent.
+// StopAgent halts the background launch agent using launchctl.
 func StopAgent() error {
 	plistPath := getPlistPath()
 
+	// Use bootout to stop the service
 	if err := getAgentUninstallCommand(plistPath).Run(); err != nil {
 		return fmt.Errorf("failed to stop agent: %w", err)
 	}
@@ -104,7 +111,7 @@ func StopAgent() error {
 	return nil
 }
 
-// StatusAgent checks the status of the agent.
+// StatusAgent queries the launchd service status for the agent.
 func StatusAgent() error {
 	cmd := exec.Command("launchctl", "print", "gui/"+fmt.Sprint(os.Getuid())+"/"+agentLabel)
 	output, err := cmd.CombinedOutput()

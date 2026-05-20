@@ -1,3 +1,5 @@
+// Package cleaner provides robust and parallelized file system cleanup capabilities.
+// It features dry-run support, recursive size calculation, and hook-based event reporting.
 package cleaner
 
 import (
@@ -10,8 +12,8 @@ import (
 	"go.uber.org/zap"
 )
 
-// Cleaner handles the deletion of files and execution of cleanup commands.
-// It supports a dry-run mode to prevent accidental data loss.
+// Cleaner handles the deletion of files and execution of cleanup processes.
+// It maintains configurations for logging, safety (dry-run), and ignore patterns.
 type Cleaner struct {
 	logger         *zap.Logger
 	dryRun         bool
@@ -40,7 +42,8 @@ func (c *Cleaner) logToFile(format string, a ...interface{}) {
 	}
 }
 
-// isIgnored checks if a file or directory name matches any of the configured ignore patterns.
+// isIgnored checks if a file or directory name matches any of the configured ignore patterns
+// using standard filepath glob matching.
 func (c *Cleaner) isIgnored(name string) bool {
 	for _, pattern := range c.ignorePatterns {
 		matched, err := filepath.Match(pattern, name)
@@ -51,8 +54,8 @@ func (c *Cleaner) isIgnored(name string) bool {
 	return false
 }
 
-// Clean deletes the provided list of file paths in parallel, invoking a hook for each file.
 // Clean deletes the provided list of file paths in parallel, invoking an optional hook for each path.
+// It uses a worker pool based on the available CPU cores to maximize performance.
 func (c *Cleaner) Clean(paths []string, hook func(path string, freed int64, err error)) (int, int64, error) {
 	numWorkers := runtime.NumCPU()
 	pathChan := make(chan string, len(paths))
@@ -64,6 +67,7 @@ func (c *Cleaner) Clean(paths []string, hook func(path string, freed int64, err 
 	resChan := make(chan result, len(paths))
 
 	var wg sync.WaitGroup
+	// Spawn workers to process paths concurrently
 	for i := 0; i < numWorkers; i++ {
 		wg.Add(1)
 		go func() {
@@ -71,12 +75,14 @@ func (c *Cleaner) Clean(paths []string, hook func(path string, freed int64, err 
 			for path := range pathChan {
 				info, err := os.Stat(path)
 				if err != nil {
+					// Skip paths that don't exist, log errors for others
 					if !os.IsNotExist(err) {
 						c.logger.Debug("Failed to stat path", zap.String("path", path), zap.Error(err))
 					}
 					continue
 				}
 
+				// Calculate space that will be freed
 				var size int64
 				if info.IsDir() {
 					size, _ = c.getDirSize(path)
@@ -90,6 +96,7 @@ func (c *Cleaner) Clean(paths []string, hook func(path string, freed int64, err 
 				}
 				c.logToFile("%sWould delete: %s", prefix, path)
 
+				// Perform removal if not in dry-run mode
 				if !c.dryRun {
 					err = os.RemoveAll(path)
 					if err != nil {
@@ -99,6 +106,7 @@ func (c *Cleaner) Clean(paths []string, hook func(path string, freed int64, err 
 						continue
 					}
 				}
+				// Callback to notify progress
 				if hook != nil {
 					hook(path, size, nil)
 				}
@@ -107,11 +115,13 @@ func (c *Cleaner) Clean(paths []string, hook func(path string, freed int64, err 
 		}()
 	}
 
+	// Distribute work to channels
 	for _, path := range paths {
 		pathChan <- path
 	}
 	close(pathChan)
 
+	// Wait for workers and aggregate results
 	go func() {
 		wg.Wait()
 		close(resChan)
@@ -136,6 +146,7 @@ func (c *Cleaner) getDirSize(path string) (int64, error) {
 	}
 
 	for _, entry := range entries {
+		// Respect ignore patterns to avoid counting sensitive or system files
 		if c.isIgnored(entry.Name()) {
 			continue
 		}

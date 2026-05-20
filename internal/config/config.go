@@ -1,3 +1,5 @@
+// Package config provides structures and helper functions for managing the application's configuration.
+// It uses viper for configuration loading and provides functionality to bootstrap a default configuration file.
 package config
 
 import (
@@ -9,12 +11,13 @@ import (
 )
 
 // Config represents the application's root configuration structure.
-// It includes global settings and a list of specific cleanup targets.
+// It encapsulates global application settings and a list of cleanup targets to process.
 type Config struct {
 	Targets        []TargetConfig `mapstructure:"targets"`
 	IgnorePatterns []string       `mapstructure:"ignore_patterns"`
 	DryRun         bool           `mapstructure:"dry_run"`
-	Schedule       string         `mapstructure:"schedule"` // Cron expression, e.g., "0 0 * * *" (daily at midnight)
+	// Schedule is the cron expression (e.g., "0 0 0 * * *" for daily at midnight).
+	Schedule string `mapstructure:"schedule"`
 }
 
 // TargetConfig defines the cleanup rules and metadata for a specific filesystem path or command.
@@ -29,15 +32,15 @@ type TargetConfig struct {
 	IgnorePatterns []string `mapstructure:"ignore_patterns"`
 }
 
-// Load unmarshals the configuration from Viper into the Config struct.
-// It also applies default values for missing optional fields.
+// Load unmarshals the configuration from the globally configured viper instance into the Config struct.
+// It applies default values, such as setting the cleanup Type to "file" if left unspecified.
 func Load() (*Config, error) {
 	var cfg Config
 	if err := viper.Unmarshal(&cfg); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 
-	// Default Type to "file" if not specified
+	// Ensure all targets have a valid Type
 	for i := range cfg.Targets {
 		if cfg.Targets[i].Type == "" {
 			cfg.Targets[i].Type = "file"
@@ -47,8 +50,8 @@ func Load() (*Config, error) {
 	return &cfg, nil
 }
 
-// GetDefaultConfigPath returns the standard absolute path for the application configuration file.
-// It usually resolves to ~/.MacosLeanStorage.yaml.
+// GetDefaultConfigPath returns the standard absolute path for the application configuration file,
+// which defaults to ~/.MacosLeanStorage.yaml.
 func GetDefaultConfigPath() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -58,18 +61,19 @@ func GetDefaultConfigPath() (string, error) {
 }
 
 // CreateDefaultConfig generates a default configuration file with a predefined set of cleanup targets.
-// If the file already exists, it does nothing.
+// If the configuration file already exists, this function returns nil without overwriting it.
 func CreateDefaultConfig(path string) error {
 	if _, err := os.Stat(path); err == nil {
-		return nil // Already exists
+		return nil // File already exists
 	}
 
-	// Create parent directory if it doesn't exist
+	// Ensure parent directory exists before creation
 	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return fmt.Errorf("failed to create config directory: %w", err)
 	}
 
+	// Default template with a comprehensive list of common macOS cache and system cleanup locations
 	defaultConfig := `targets:
   # Arc Browser
   - name: "Arc CacheStorage"

@@ -1,3 +1,5 @@
+// Package engine coordinates the scanning and cleanup operations.
+// It manages lifecycle hooks, parallel task execution, and result aggregation for cleanup targets.
 package engine
 
 import (
@@ -11,18 +13,18 @@ import (
 	"go.uber.org/zap"
 )
 
-// ScannerInterface abstracts the scanner functionality
+// ScannerInterface abstracts the scanner functionality for dependency injection.
 type ScannerInterface interface {
 	Scan(target scanner.Target, ignorePatterns []string) (*scanner.Result, error)
 }
 
-// CleanerInterface abstracts the cleaner functionality
+// CleanerInterface abstracts the cleaner functionality for dependency injection.
 type CleanerInterface interface {
 	Clean(paths []string, hook func(path string, freed int64, err error)) (int, int64, error)
 	DryRun() bool
 }
 
-// Hooks provides lifecycle callbacks for engine operations.
+// Hooks provides lifecycle callbacks for engine operations, enabling progress tracking and logging.
 type Hooks struct {
 	OnTargetScanStart          func(name string, path string)
 	OnTargetScanEnd            func(name string, result *scanner.Result, err error)
@@ -35,7 +37,7 @@ type Hooks struct {
 	AfterExecutingCommand      func(name string, command string, err error)
 }
 
-// Engine encapsulates the scanning and cleaning logic.
+// Engine encapsulates the orchestration logic for scanning and cleaning.
 type Engine struct {
 	scanner        ScannerInterface
 	cleaner        CleanerInterface
@@ -53,18 +55,17 @@ func New(logger *zap.Logger, s ScannerInterface, c CleanerInterface, commandHand
 	}
 }
 
-// ... rest of the file
-
-// SetCommandHandler allows injecting the command handler.
+// SetCommandHandler allows injecting the command handler into the engine.
 func (e *Engine) SetCommandHandler(ch *CommandHandler) {
 	e.commandHandler = ch
 }
 
+// CommandHandler returns the configured command handler for the engine.
 func (e *Engine) CommandHandler() *CommandHandler {
 	return e.commandHandler
 }
 
-// Scan performs parallel scanning of the provided targets.
+// Scan performs parallel scanning of the provided cleanup targets using a worker pool.
 func (e *Engine) Scan(targets []config.TargetConfig, hooks Hooks) (map[string]*scanner.Result, error) {
 	numWorkers := runtime.NumCPU()
 	jobs := make(chan config.TargetConfig, len(targets))
@@ -75,6 +76,7 @@ func (e *Engine) Scan(targets []config.TargetConfig, hooks Hooks) (map[string]*s
 	}, len(targets))
 
 	var wg sync.WaitGroup
+	// Initialize workers for parallel scanning
 	for i := 0; i < numWorkers; i++ {
 		wg.Add(1)
 		go func() {
@@ -87,13 +89,14 @@ func (e *Engine) Scan(targets []config.TargetConfig, hooks Hooks) (map[string]*s
 					SafetyLevel: t.SafetyLevel,
 					Type:        t.Type,
 				}
-				// Fire the OnTargetScanStart hook before scanning
+				// Trigger lifecycle hook before scanning
 				if hooks.OnTargetScanStart != nil {
 					hooks.OnTargetScanStart(t.Name, t.Path)
 				}
 
 				res, err := e.scanner.Scan(target, t.IgnorePatterns)
 
+				// Trigger lifecycle hook after scanning
 				if hooks.OnTargetScanEnd != nil {
 					hooks.OnTargetScanEnd(t.Name, res, err)
 				}
@@ -106,8 +109,8 @@ func (e *Engine) Scan(targets []config.TargetConfig, hooks Hooks) (map[string]*s
 			}
 		}()
 	}
-	// ...
 
+	// Dispatch targets to jobs queue
 	for _, t := range targets {
 		if t.Command == "" {
 			jobs <- t
@@ -117,6 +120,7 @@ func (e *Engine) Scan(targets []config.TargetConfig, hooks Hooks) (map[string]*s
 	wg.Wait()
 	close(results)
 
+	// Collect and map results
 	resultMap := make(map[string]*scanner.Result)
 	for res := range results {
 		if res.Err == nil {
@@ -138,16 +142,21 @@ func (e *Engine) Clean(resultMap map[string]*scanner.Result, targets []config.Ta
 	jobs := make(chan job, len(targets))
 	
 	var wg sync.WaitGroup
+	// Initialize workers for parallel cleanup
 	for i := 0; i < numWorkers; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			for j := range jobs {
+				// Use thread-safe aggregator for unique path tracking
 				aggregator.Add(j.res.Files, j.res.FileSizes)
+				
+				// Execute parallel cleanup
 				_, _, err := e.cleaner.Clean(j.res.Files, hooks.OnFileCleaned)
 				if err != nil {
 					e.logger.Error("Clean failed", zap.String("target", j.target.Name), zap.Error(err))
 				}
+				// Trigger lifecycle hook
 				if hooks.OnTargetCleaned != nil {
 					hooks.OnTargetCleaned(j.target.Name)
 				}
@@ -155,6 +164,7 @@ func (e *Engine) Clean(resultMap map[string]*scanner.Result, targets []config.Ta
 		}()
 	}
 
+	// Dispatch cleanup jobs
 	for _, t := range targets {
 		res, ok := resultMap[t.Name]
 		if !ok || len(res.Files) == 0 {
@@ -168,14 +178,14 @@ func (e *Engine) Clean(resultMap map[string]*scanner.Result, targets []config.Ta
 	close(jobs)
 	wg.Wait()
 
-	// Process commands sequentially
+	// Execute command-based tasks after file cleanup
 	e.ProcessCommands(targets, hooks)
 
 	uniqueCount, totalSize := aggregator.GetStats()
 	return uniqueCount, totalSize, nil
 }
 
-// ProcessCommands executes commands associated with targets.
+// ProcessCommands executes commands associated with targets sequentially.
 func (e *Engine) ProcessCommands(targets []config.TargetConfig, hooks Hooks) {
 	if e.commandHandler == nil {
 		return
@@ -204,14 +214,14 @@ func (e *Engine) ScanAndClean(targets []config.TargetConfig, hooks Hooks) (int, 
 	return e.Clean(resMap, targets, hooks)
 }
 
-// ResultAggregator safely aggregates unique scan results.
+// ResultAggregator safely aggregates unique scan results to avoid double-counting.
 type ResultAggregator struct {
 	mu          sync.RWMutex
 	UniquePaths map[string]int64
 	totalSize   int64
 }
 
-// Add safely adds results to the aggregator.
+// Add safely adds results to the aggregator, ensuring paths are only counted once.
 func (ra *ResultAggregator) Add(files []string, sizes []int64) {
 	ra.mu.Lock()
 	defer ra.mu.Unlock()
@@ -223,7 +233,7 @@ func (ra *ResultAggregator) Add(files []string, sizes []int64) {
 	}
 }
 
-// GetStats returns the current statistics of aggregated results.
+// GetStats returns the current deduplicated statistics of aggregated results.
 func (ra *ResultAggregator) GetStats() (int, int64) {
 	ra.mu.RLock()
 	defer ra.mu.RUnlock()
