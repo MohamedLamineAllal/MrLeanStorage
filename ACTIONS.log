@@ -131,3 +131,9 @@ Files updated/created:
 - cmd/serve.go: Updated signaling loop to monitor both standard OS signals and `reload.signal` modification times.
 - README.md: Marked `mls config reload` as fully cross-platform.
 Verified: All compilation and race test validations passed.
+
+## Action: 2026-05-20 (Resuming from compaction)
+Action: Proceeding with event-driven cross-platform configuration reload refactoring. Eliminating the periodic signal-file checking ticker in cmd/serve.go and replacing it with a native OS signal SIGHUP listener for Unix (macOS/Linux) and a dynamic loopback TCP port listener (127.0.0.1:0) for Windows to ensure zero-idle-CPU/memory consumption.
+
+## Action: 2026-05-20 (Commit, test reload, and CI platforms)
+Action: Started stage and commit of the native configuration reload refactoring. Designing comprehensive cross-platform unit tests for startReloadListener and reloadProcesses to fully validate behavior. Preparing response on GitHub Actions cross-platform runners.

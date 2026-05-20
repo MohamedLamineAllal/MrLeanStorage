@@ -1,11 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-	"os"
-	"path/filepath"
-	"time"
-
 	"github.com/mohamedlamineallal/MrLeanStorage/internal/config"
 	"github.com/mohamedlamineallal/MrLeanStorage/internal/utils"
 	"github.com/spf13/cobra"
@@ -59,15 +54,7 @@ var reloadCmd = &cobra.Command{
 	Short:        "Reload the configuration for the running background agent",
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// 1. Write the cross-platform reload signal file
-		sigPath := filepath.Join(utils.GetAppCacheDir(), "reload.signal")
-		timestamp := time.Now().Format(time.RFC3339Nano)
-		if err := os.WriteFile(sigPath, []byte(timestamp), 0644); err != nil {
-			return fmt.Errorf("failed to write reload signal file: %w", err)
-		}
-		colorSuccess.Println("Reload signal file updated successfully.")
-
-		// 2. Trigger platform-specific signaling (SIGHUP on Unix, no-op on Windows)
+		// Trigger platform-specific signaling (SIGHUP on Unix, local TCP dial on Windows)
 		if err := reloadProcesses(); err != nil {
 			return err
 		}

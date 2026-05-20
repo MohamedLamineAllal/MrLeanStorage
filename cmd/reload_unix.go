@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+
+	"go.uber.org/zap"
 )
 
 // reloadSignals lists the signals that trigger a configuration reload on Unix systems.
@@ -16,6 +18,11 @@ var reloadSignals = []os.Signal{syscall.SIGHUP}
 
 // listenSignals lists the signals we subscribe to for shutdown or configuration reloading on Unix.
 var listenSignals = []os.Signal{syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP}
+
+// startReloadListener is a no-op on Unix since SIGHUP is natively event-driven via the OS.
+func startReloadListener(logger *zap.Logger, reloadFn func()) {
+	// No-op on Unix since SIGHUP signals are used natively.
+}
 
 // reloadProcesses sends a SIGHUP signal to all active "mls serve" processes on Unix systems.
 func reloadProcesses() error {

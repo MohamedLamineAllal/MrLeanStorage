@@ -26,7 +26,7 @@
 - [x] Cross-Platform Config Open & Reveal: Created robust OpenPath and RevealPath system helpers in internal/utils supporting macOS, Windows, and Linux natively, and refactored config commands to use them.
 - [x] Cross-Platform Documentation & CLI Help Alignment: Fully updated README.md, docs/USER_GUIDE.md, and cmd/config.go help text to remove macOS-only notes for config open/reveal and describe the cross-platform file explorers.
 - [x] Strict Prompt Logging Rule: Updated AGENTS.md to mandate that user prompts are logged exactly as they are given, without paraphrasing or truncating.
-- [x] Cross-Platform Config Reload: Implemented a robust, signal-file-based config reload system supporting macOS, Linux, and Windows natively. Refactored serve signal loops to watch the reload.signal file and process SIGHUP via compile-safe build-tagged source files.
+- [x] Purely Event-Driven Cross-Platform Config Reload: Refactored the config reload mechanism to be purely event-driven, removing all periodic file polling/tickers. Uses OS-native SIGHUP signaling on Unix (macOS/Linux) and an OS-allocated local loopback TCP port listener on Windows that blocks on Accept(), guaranteeing zero idle CPU and memory usage.
 
 ## Core Project Documentation
 - [Cleanup Estimation Discrepancy Analysis](./docs/Stats_Counting.md)

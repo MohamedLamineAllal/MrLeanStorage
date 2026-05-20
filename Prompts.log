@@ -100,3 +100,15 @@ please update AGENTS.md to make sure prompts.log should log the prompts exactly 
 
 ## Prompt: 2026-05-20 (Cross-platform config reload)
 Can we make sure mls config reload is cross platform
+
+## Prompt: 2026-05-20 (Resuming from compaction)
+Continue
+
+## Prompt: 2026-05-20 (Commit and test reload + CI platforms)
+Awesome
+please commit this current changes
+Then after that 
+please build tests for this
+
+Also for the github workflow, is there a way to make sure tests run in different platforms
+(including windows) or this is not possible on github actions

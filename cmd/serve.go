@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/mohamedlamineallal/MrLeanStorage/internal/config"
@@ -50,14 +51,23 @@ var serveCmd = &cobra.Command{
 			return fmt.Errorf("no schedule configured")
 		}
 
+		// cfgMu protects concurrent access to the running configuration cfg,
+		// ensuring that configuration hot-reloads do not conflict with active cleanups.
+		var cfgMu sync.RWMutex
+
 		s := scheduler.New(logger)
 
 		// Define the core cleanup task using the unified Engine orchestration
 		task := func() error {
 			logger.Info("Starting scheduled cleanup")
 
+			cfgMu.RLock()
+			targets := cfg.Targets
+			ignorePatterns := cfg.IgnorePatterns
+			cfgMu.RUnlock()
+
 			// Initialize the default Engine and CommandHandler with dryRun = false
-			eng := engine.NewDefault(logger, cfg.IgnorePatterns, false)
+			eng := engine.NewDefault(logger, ignorePatterns, false)
 			ch := engine.NewCommandHandler(eng, s, logger)
 			eng.SetCommandHandler(ch)
 
@@ -91,7 +101,7 @@ var serveCmd = &cobra.Command{
 				},
 			}
 
-			count, size, err := eng.ScanAndClean(cfg.Targets, hooks)
+			count, size, err := eng.ScanAndClean(targets, hooks)
 			if err != nil {
 				return err
 			}
@@ -106,22 +116,23 @@ var serveCmd = &cobra.Command{
 			return err
 		}
 
-		// Initialize the reload signal file state
-		sigPath := filepath.Join(utils.GetAppCacheDir(), "reload.signal")
-		var lastReloadTime time.Time
-		if info, err := os.Stat(sigPath); err == nil {
-			lastReloadTime = info.ModTime()
-		} else {
-			// If the file doesn't exist, establish a baseline modification time
-			_ = os.WriteFile(sigPath, []byte(time.Now().Format(time.RFC3339Nano)), 0644)
-			if info, err := os.Stat(sigPath); err == nil {
-				lastReloadTime = info.ModTime()
-			}
-		}
-
 		s.CheckForMissedTasks(task)
 		s.Start()
 		defer s.Stop()
+
+		// Start the platform-specific event-driven reload listener (TCP port on Windows, no-op on Unix)
+		startReloadListener(logger, func() {
+			logger.Info("Reloading configuration via event listener...")
+			newCfg, err := config.Load()
+			if err != nil {
+				logger.Error("Failed to reload config", zap.Error(err))
+				return
+			}
+			cfgMu.Lock()
+			cfg = newCfg
+			cfgMu.Unlock()
+			logger.Info("Configuration reloaded successfully")
+		})
 
 		colorSuccess.Printf("Scheduler started with schedule: %s\n", cfg.Schedule)
 		fmt.Println("Press Ctrl+C to stop")
@@ -137,30 +148,12 @@ var serveCmd = &cobra.Command{
 		ticker := time.NewTicker(30 * time.Minute)
 		defer ticker.Stop()
 
-		// Periodic check for config reload signal file every 2 seconds
-		reloadTicker := time.NewTicker(2 * time.Second)
-		defer reloadTicker.Stop()
-
-		// Background loop for signal handling, catch-up ticker, and reload file watcher
+		// Background loop for signal handling, catch-up ticker
 		go func() {
 			for {
 				select {
 				case <-ticker.C:
 					s.CheckForMissedTasks(task)
-				case <-reloadTicker.C:
-					if info, err := os.Stat(sigPath); err == nil {
-						if info.ModTime().After(lastReloadTime) {
-							lastReloadTime = info.ModTime()
-							logger.Info("Reloading configuration (file signal detected)...")
-							newCfg, err := config.Load()
-							if err != nil {
-								logger.Error("Failed to reload config", zap.Error(err))
-								continue
-							}
-							cfg = newCfg
-							logger.Info("Configuration reloaded successfully")
-						}
-					}
 				case sig := <-sigChan:
 					// Check if signal matches SIGHUP/reloadSignals
 					isReload := false
@@ -177,7 +170,9 @@ var serveCmd = &cobra.Command{
 							logger.Error("Failed to reload config", zap.Error(err))
 							continue
 						}
+						cfgMu.Lock()
 						cfg = newCfg
+						cfgMu.Unlock()
 						logger.Info("Configuration reloaded successfully")
 					} else {
 						// Signal the main thread to shut down on SIGINT or SIGTERM
