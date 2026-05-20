@@ -2,43 +2,54 @@
 
 This document outlines the low-level design decisions for the `mls` tool, focusing on performance, efficiency, and safety.
 
-## 1. Concurrent Scanner Architecture
+## 1. Concurrent Orchestration Architecture
 
-### Worker Pool Model
-To scan the filesystem without hitting OS file descriptor limits:
-- **Task Producer**: Recursively traverses the root targets and pushes directories to a buffered channel.
-- **Worker Pool**: A fixed number of workers (e.g., `runtime.NumCPU()`) pull directories from the channel, use `os.ReadDir`, calculate sizes, and check `atime`.
-- **Aggregator**: Collects results and builds the cleanup manifest.
+### Overlapping Scan-and-Clean
+To maximize I/O throughput and minimize execution time:
+- **Streaming Pipeline**: The `Engine` uses channels to stream discovered targets from the scanner directly to the cleaner.
+- **Worker Pools**: 
+    - **Scanner**: Uses a pool of goroutines to perform high-speed `os.ReadDir` traversals.
+    - **Cleaner**: Uses a separate pool of goroutines to perform deletions in parallel, preventing I/O wait in one thread from blocking others.
+- **Aggregator**: Collects real-time statistics (size, count) as the pipeline executes, providing immediate feedback.
 
 ### Performance Optimizations
-- **Fast Path Selection**: Use `Lstat` to quickly identify symlinks (skip) or sockets.
-- **Batched Stats**: Use `os.ReadDir` instead of `filepath.Walk` to reduce system calls by reading multiple directory entries at once.
-- **Early Exit**: If a directory's `mtime` hasn't changed since the last "Clean Scan," skip deep inspection (optional, requires state file).
+- **Batched I/O**: Uses `os.ReadDir` instead of `filepath.Walk` to reduce system calls by reading multiple directory entries in a single operation.
+- **Memory Efficiency**: Avoids loading the entire file tree into memory. Only identified cleanup targets are buffered in channels.
+- **Lock-Free Concurrency**: Uses atomic counters and thread-safe maps for stats collection to avoid mutex contention in high-volume scans.
 
-## 2. Daemon & Scheduler Logic
+## 2. Background Automation (Agent)
 
-### Systemd / Launchd Integration
-Instead of a long-running Go process that idles:
-- **Launchd**: On macOS, we will provide a `com.mls.daemon.plist` to trigger the tool at specific intervals (e.g., every 24 hours) or when the system is idle.
-- **Go "Daemon" Mode**: A lightweight mode that runs as a persistent process if launchd is not preferred, using `robfig/cron`.
+### Native Lifecycle Management
+`mls` delegates process management to the OS to ensure high quality and system integration:
+- **macOS (`launchd`)**:
+    - **Mechanism**: `LaunchAgents` via `.plist`.
+    - **Why**: Native support for "KeepAlive" and "RunAtLoad". It's the standard way to run user-scoped background tasks on macOS.
+- **Linux (`systemd`)**:
+    - **Mechanism**: User units (`systemctl --user`).
+    - **Why**: Provides superior logging integration (`journald`) and dependency management (e.g., start after network or local-fs).
+- **Windows (Scheduled Tasks)**:
+    - **Mechanism**: `schtasks` with `/sc onlogon`.
+    - **Why**: Most reliable way to run a background task in a user session without the complexity of a full Windows Service.
 
-### "Check-in" Logic
-- **State File**: Store the last scan timestamp in `~/Library/Application Support/mls/state.json`.
-- **Notification**: Integrate with macOS `terminal-notifier` or native `NSUserNotification` to alert the user before/after large cleanups.
+## 3. Communication & Control
 
-## 3. Safety Mechanisms
+### Zero-Idle Signal Handling
+- **Unix (SIGHUP)**: Instant reload without process restart.
+- **Windows (TCP Loopback)**: 
+    - **Design**: The `mls serve` process opens a random local port and writes it to `mls.port` in the cache directory. `mls config reload` reads this port and sends a single byte to trigger the reload.
+    - **Performance**: Zero CPU cycles spent polling; the listener blocks in the kernel until a connection arrives.
 
-### Safe-Delete (Trash vs. Unlink)
-- **Default**: Use `os.RemoveAll` for 100% safe cache directories.
-- **Option**: Provide a `--trash` flag to move items to the macOS Trash (`~/.Trash`) instead of permanent deletion.
+## 4. Safety & Integrity
 
-### Process Locking
-- **FLock**: Ensure only one instance of the scanner is running to prevent race conditions on shared cache files.
+### Process Isolation
+- **Advisory Locking**: Uses `syscall.Flock` (Unix) and exclusive file handles (Windows) to prevent data corruption from concurrent instances.
+- **Dry-Run Enforcement**: The background agent is hardcoded to run with `dry_run: false` to ensure automation is effective, while manual CLI commands default to `true` for user safety.
 
-## 4. Library Selections (Refined)
+## 5. Library Selections (Finalized)
 
-- **Scanner**: Standard Library (`os`, `path/filepath`, `sync`).
-- **Daemon**: `robfig/cron/v3`.
-- **Notifications**: `github.com/0xAX/notificator`.
-- **Progress Bar**: `github.com/schollz/progressbar/v3` (for CLI feedback during scan).
-- **Concurrency**: `golang.org/x/sync/errgroup` for easier error handling in worker pools.
+- **Engine**: Standard Library (`os`, `sync/atomic`, `runtime`).
+- **Patterns**: `github.com/bmatcuk/doublestar/v4` (Performance-optimized globbing).
+- **CLI**: `github.com/spf13/cobra`.
+- **Config**: `github.com/spf13/viper`.
+- **Logging**: `go.uber.org/zap`.
+- **Progress**: `github.com/schollz/progressbar/v3`.

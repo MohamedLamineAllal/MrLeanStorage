@@ -6,4 +6,5 @@
     - Windows: `schtasks` (Scheduled Tasks).
     - Linux: `systemd` (user services).
 - **Documentation:** Updated `README.md` and `docs/USER_GUIDE.md` to reflect cross-platform support.
+- **Architecture Update:** Updated `docs/architecture/ARCHITECTURE.md` and `docs/architecture/design_specs.md` with technical justifications for cross-platform agent implementation and other high-performance design patterns (streaming pipeline, event-driven reloads).
 - **Verification:** Built binary on Darwin and verified `mls agent status` output. Ran full test suite with `-race`.

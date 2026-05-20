@@ -1,1 +1,6 @@
 Can we make mls agent (install, uninstall, start, stop, status) cross platform
+Update the architecture documentation
+Explain what we are using for each feature and why it's best option
+if not best option, what are potential better solution than that.
+High performance high quality
+please update MEMORY, prompts log actions log and commit
