@@ -31,3 +31,16 @@ Tue May 19 12:10:49 +08 2026
 9. Add 30-min missed task catch-up ticker.
 10. Implement config reload via SIGHUP.
 11. Standardize logs and documentation.
+
+## Prompt: 2026-05-19 (Late session)
+1. Fix syntax error in cmd/agent.go.
+2. Centralize plistPath management in getPlistPath helper.
+3. Consolidate launchctl commands into helpers.
+4. Revert non-blocking kickstart change; restore original blocking behavior.
+5. Analyze sleep/wake scheduling reliability and cron drift.
+6. Implement 30-minute missed-task catch-up ticker in cmd/serve.go.
+7. Implement mls config reload (SIGHUP) in cmd/serve.go and cmd/config.go.
+8. Restore missing config open and reveal commands.
+9. Standardize Extensive.yml with titles and consistency.
+10. Systematically document the codebase file-by-file with GoDoc comments.
+11. Audit and standardize storage persistence.

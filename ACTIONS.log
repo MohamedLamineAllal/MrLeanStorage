@@ -45,3 +45,16 @@ Action: Implemented agent management commands (install, start, stop, status, uni
 Action: Added 30-minute missed task catch-up ticker to cmd/serve.go.
 Action: Implemented zero-downtime config reload via SIGHUP.
 Action: Restored missing 'open' and 'reveal' config commands.
+
+## Action: 2026-05-19 (Late session)
+Action: Refactored cmd/agent.go to centralize plistPath generation into getPlistPath().
+Action: Consolidated launchctl logic into getAgentUninstallCommand() and getAgentLoadCommand().
+Action: Reverted StartAgent to original blocking behavior.
+Action: Analyzed and documented the launchd sleep/wake scheduling behavior.
+Action: Implemented 30-minute background ticker in cmd/serve.go for task catch-up.
+Action: Implemented dynamic configuration reloading via SIGHUP in serve.go and config.go.
+Action: Restored mls config open and mls config reveal commands in cmd/config.go.
+Action: Standardized docs/configuration/Examples/Extensive.yml with titles.
+Action: Conducted exhaustive documentation audit of core modules (engine, scanner, cleaner, scheduler, config, cmd/agent, cmd/serve) adding GoDoc comments.
+Action: Migrated all transient /tmp usage to persistent storage using utils.GetAppCacheDir().
+Action: Verified all changes with -race detection and comprehensive test suites.
