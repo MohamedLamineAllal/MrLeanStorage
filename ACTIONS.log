@@ -156,3 +156,8 @@ Action: Updated .github/workflows/ci.yml to use a matrix strategy running go bui
 - **Action:** Updated AGENTS.md with append-only logging mandate.
 - **Context:** User requested clear instructions that Prompts.log and ACTIONS.log are append-only to prevent history loss.
 - **Implementation:** Modified Step 2 in AGENTS.md to explicitly state the append-only mandate.
+
+### 2026-05-20
+- **Action:** Fixed Windows test failure (undefined findMLSServePIDs).
+- **Context:** cmd/reload_test.go was using a Unix-only function and lacked build tags, causing failures on Windows.
+- **Implementation:** Split cmd/reload_test.go into cmd/reload_unix_test.go and cmd/reload_windows_test.go with appropriate build tags.

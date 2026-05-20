@@ -131,3 +131,9 @@ please update MEMORY, prompts log actions log and commit
 
 ## Prompt: 2026-05-20
 update AGENTS.md to instruct clearly that logs are append only.
+## Prompt: 2026-05-20
+Error: cmdeload_test.go:76:15: undefined: findMLSServePIDs
+
+Can you check that and fix it
+make sure to rigorously analyse it to one shot it. As we are on a macos.
+The output above is from github action running test on windows
