@@ -6,12 +6,14 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
 	"github.com/mohamedlamineallal/MrLeanStorage/internal/config"
 	"github.com/mohamedlamineallal/MrLeanStorage/internal/engine"
 	"github.com/mohamedlamineallal/MrLeanStorage/internal/scheduler"
+	"github.com/mohamedlamineallal/MrLeanStorage/internal/utils"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
@@ -22,6 +24,24 @@ var serveCmd = &cobra.Command{
 	Use:   "serve",
 	Short: "Start the background cleanup scheduler",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		// Enforce single-instance execution of serve using a cross-platform lockfile
+		pidPath := filepath.Join(utils.GetAppCacheDir(), "mls.pid")
+		lockFile, existingPid, err := utils.AcquireProcessLock(pidPath)
+		if err != nil {
+			if existingPid > 0 {
+				fmt.Printf("Another mls serve process is already running (PID %d).\n", existingPid)
+			} else {
+				fmt.Println("Another mls serve process is already running.")
+			}
+			return nil
+		}
+		defer func() {
+			if lockFile != nil {
+				_ = lockFile.Close()
+				_ = os.Remove(pidPath)
+			}
+		}()
+
 		cfg, err := config.Load()
 		if err != nil {
 			return err

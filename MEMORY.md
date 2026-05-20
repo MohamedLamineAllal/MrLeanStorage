@@ -22,6 +22,7 @@
 - [x] Active Background Deletion Mode: Configured the background scheduler (`mls serve` / `mls agent`) to always run in active deletion mode (`dry_run: false`) regardless of global configuration settings. Added highly visible warning callouts in the README.md and USER_GUIDE.md.
 - [x] Background Engine Alignment: Refactored the background serve daemon (`cmd/serve.go`) to utilize the unified orchestration `Engine.ScanAndClean()`, adding support for concurrent scanning/deletion, results deduplication, and execution of system command targets on schedule.
 - [x] Multi-PID Config Reload & Silenced CLI Usage: Enhanced config reload command to support signaling multiple active serve processes, resolved channel race conditions for SIGHUP to ensure stable runtime hot-reloads without process termination, and globally silenced confusing Cobra CLI usage menus on runtime/operational errors.
+- [x] Single-Instance Serve Enforcement: Implemented a robust cross-platform locking mechanism using syscall.Flock (macOS/Linux) and exclusive-file fallbacks (Windows) to prevent concurrent instances of `mls serve` from running, printing a friendly already-running message (with the active PID) and exiting cleanly.
 
 
 ## Core Project Documentation

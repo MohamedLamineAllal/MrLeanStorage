@@ -85,3 +85,6 @@ User reported that running `./mls config reload` failed with an invalid syntax e
 
 ## Prompt: 2026-05-20 (Fix serve exit on SIGHUP config reload)
 User reported that after sending the SIGHUP signal (dynamic configuration reload) to the active `mls serve` processes, the process exited with no message instead of hot-reloading and remaining running.
+
+## Prompt: 2026-05-20 (Enforce single-instance mls serve)
+User requested to ensure only a single instance of `mls serve` can run at any given time. If another process is already running, the new process should print a message stating that it is already running and exit cleanly.
