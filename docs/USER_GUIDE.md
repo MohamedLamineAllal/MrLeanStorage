@@ -83,12 +83,12 @@ This is ideal for keeping your Mac lean without manual intervention.
 
 Instead of using `mls serve` you can setup a background agent that the system make sure it will be always running in background. Check Background Automation section bellow.
 
-## ⏰ Background Automation (macOS)
+## ⏰ Background Automation
 
-Manage the background daemon seamlessly using standard `launchd` controls built right into the CLI:
+Manage the background daemon seamlessly using standard system controls (launchd on macOS, systemd on Linux, and Scheduled Tasks on Windows) built right into the CLI:
 
 ```bash
-# Install the launchd background agent
+# Install the background agent
 mls agent install
 
 # Start the background service

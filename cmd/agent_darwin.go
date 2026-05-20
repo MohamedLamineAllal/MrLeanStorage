@@ -1,3 +1,5 @@
+//go:build darwin
+
 // Package cmd implements the CLI commands for MrLeanStorage.
 // It includes logic for background agent management using launchd and CLI configuration.
 package cmd

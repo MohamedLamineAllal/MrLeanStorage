@@ -27,6 +27,7 @@
 - [x] Cross-Platform Documentation & CLI Help Alignment: Fully updated README.md, docs/USER_GUIDE.md, and cmd/config.go help text to remove macOS-only notes for config open/reveal and describe the cross-platform file explorers.
 - [x] Strict Prompt Logging Rule: Updated AGENTS.md to mandate that user prompts are logged exactly as they are given, without paraphrasing or truncating.
 - [x] Purely Event-Driven Cross-Platform Config Reload: Refactored the config reload mechanism to be purely event-driven, removing all periodic file polling/tickers. Uses OS-native SIGHUP signaling on Unix (macOS/Linux) and an OS-allocated local loopback TCP port listener on Windows that blocks on Accept(), guaranteeing zero idle CPU and memory usage.
+- [x] Cross-Platform Agent Management: Implemented native background service management for macOS (launchd), Linux (systemd), and Windows (Scheduled Tasks). Split `agent.go` into platform-specific files (`agent_darwin.go`, `agent_windows.go`, `agent_linux.go`, `agent_other.go`) and updated documentation to reflect cross-platform support.
 
 ## Core Project Documentation
 - [Cleanup Estimation Discrepancy Analysis](./docs/Stats_Counting.md)

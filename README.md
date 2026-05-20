@@ -108,12 +108,12 @@ This is ideal for keeping your Mac lean without manual intervention.
 
 ---
 
-## ⏰ Background Automation (macOS)
+## ⏰ Background Automation
 
-Manage the background daemon seamlessly using standard `launchd` controls built right into the CLI:
+Manage the background daemon seamlessly using standard system controls (launchd on macOS, systemd on Linux, and Scheduled Tasks on Windows) built right into the CLI:
 
 ```bash
-# Install the launchd background agent
+# Install the background agent
 mls agent install
 
 # Start the background service
@@ -143,20 +143,15 @@ mls agent uninstall
 
 ## 🖥️ Multi-platform Support
 
-`mls` is designed to be cross-platform and should work on macOS, Linux, and Windows. However, we are currently focusing our development efforts primarily on macOS. With time, we plan to improve and expand support for other platforms.
-
-Please note that the background agent management commands (`mls agent ...`) are currently supported **only on macOS**. We will update this section as support for background services on other platforms is implemented.
-
-The rest of the commands should work on all platforms:
+`mls` is designed to be cross-platform and works on macOS, Linux, and Windows.
 
 - `mls scan`: Scans targets for files and directories to clean based on your configuration. (Cross-platform)
 - `mls clean`: Scan and deletes files and directories identified during the scan. (Cross-platform)
+- `mls agent`: Manages the background cleanup service. (Cross-platform: launchd on macOS, systemd on Linux, Scheduled Tasks on Windows)
 - `mls serve`: Starts the background scheduler loop to perform automated cleanup. You can use it with CLI on any platform, you can set it up as a daemon, or start when the system starts. (Cross-platform)
 - `mls config open`: Opens the configuration file in your default system editor. (Cross-platform)
 - `mls config reveal`: Reveals the configuration file location in your system's file explorer (Finder, File Explorer, or parent folder on Linux). (Cross-platform)
 - `mls config reload`: Signals all running `mls serve` daemons to reload their configuration. (Cross-platform)
-
-If you don't want to wait for the Daemon support on other platforms you can setup yours, with `mls serve`. Ask `gemini` or `gpt` for how to set up a daemon on linux or windows for `mls serve` command. `mls serve` will handle the rest for you.
 
 ---
 
