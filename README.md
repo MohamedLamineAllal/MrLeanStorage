@@ -115,8 +115,9 @@ Refer to [docs/RELEASE_PROCESS.md](./docs/RELEASE_PROCESS.md) for information on
 ## Multi-platform Support
 `mls` is designed to be cross-platform and should work on macOS, Linux, and Windows. However, we are currently focusing our development efforts primarily on macOS. With time, we plan to improve and expand support for other platforms.
 
-Please note that the background agent and daemon-related features (`mls agent ...` and `mls serve`) are currently supported **only on macOS**. We will update this section as support for background services on other platforms is implemented.
+Please note that the background agent management commands (`mls agent ...`) are currently supported **only on macOS**. We will update this section as support for background services on other platforms is implemented.
+
 
 ## License
-MIT
 
+MIT
