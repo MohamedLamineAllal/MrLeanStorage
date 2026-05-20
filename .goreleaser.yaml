@@ -50,6 +50,7 @@ homebrew_casks:
     repository:
       owner: MohamedLamineAllal
       name: homebrew-mls
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
     commit_author:
       name: goreleaserbot
       email: goreleaser@mohamed.dev
