@@ -14,6 +14,14 @@
 ## Installation
 
 ### From Source (Build & Install)
+
+Inside the repo run:
+
+```sh
+go build -o mls main.go && \
+sudo mv mls /usr/local/bin/mls
+```
+
 To build and install `mls` from the source repository:
 
 ```bash
@@ -21,7 +29,7 @@ To build and install `mls` from the source repository:
 git clone git@github.com:MohamedLamineAllal/MacOSLeanStorage.git /tmp/mls-build && \
 cd /tmp/mls-build && \
 go build -o mls main.go && \
-mv mls /usr/local/bin/mls && \
+sudo mv mls /usr/local/bin/mls && \
 cd /tmp && rm -rf mls-build
 ```
 
