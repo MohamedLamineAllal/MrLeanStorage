@@ -63,7 +63,36 @@ mls agent uninstall
 
 ## Configuration
 
-See [Configuration Examples](./docs/configuration/Examples/) for templates.
+You can modify or create your configuration file at `~/.MacosLeanStorage.yaml`:
+
+it looks like
+
+```yaml
+targets:
+  - name: "VSCode Caches"
+    path: "~/Library/Caches/com.microsoft.VSCode"
+    threshold_days: 7
+    safety_level: 1
+  - name: "Chrome Caches"
+    path: "~/Library/Caches/Google/Chrome/Default/Cache"
+    threshold_days: 14
+    safety_level: 1
+dry_run: true
+ignore_patterns:
+  - ".DS_Store"
+  - "._*"
+  - ".Spotlight-V100"
+  - ".Trashes"
+  - ".fseventsd"
+schedule: "0 0 0 * * *"
+```
+
+Check the examples on [Configuration Examples](./docs/configuration/Examples/).
+
+- [Extensive Configuration](./docs/configuration/Examples/Extensive.yml)
+  - Extensive and growing, we update it from time to time. (It's what the author is using for his own use case)
+- [Default configuration](./docs/configuration/Examples/default.yml)
+  - The Default configuration if you don't set yours (Updated with time)
 
 ## Testing
 
