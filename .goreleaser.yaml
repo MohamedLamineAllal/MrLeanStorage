@@ -14,7 +14,11 @@ builds:
       - arm64
 
 archives:
-  - name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+  - id: default
+    name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+    format_overrides:
+      - goos: windows
+        format: zip
 
 nfpms:
   - id: mls
@@ -26,7 +30,10 @@ nfpms:
     formats:
       - deb
       - rpm
-    bindir: /usr/local/bin
+    # This maps your compiled binary into the package's install directory
+    contents:
+      - src: ./mls
+        dst: /usr/local/bin/mls
 
 release:
   github:
@@ -35,15 +42,12 @@ release:
   name_template: "Release {{ .Tag }}"
   header: |
     # MrLeanStorage {{ .Tag }}
-    
-    A high-performance storage cleanup tool for macOS, designed to safely and efficiently clean up large cache and temporary files.
+
+    A high-performance storage cleanup tool for macOS, designed to safely and efficiently clean up large cache and files with your easy to setup custom configuration and paths pattern selection.
   footer: |
-    ## Installation
-    Download the binary for your platform, or install via package manager (deb/rpm) provided above.
-    
     See [README.md](https://github.com/MohamedLamineAllal/MrLeanStorage/blob/main/README.md) for installation and usage guides.
 
-homebrew_tap:
+brews:
   - repository:
       owner: MohamedLamineAllal
       name: homebrew-mls
