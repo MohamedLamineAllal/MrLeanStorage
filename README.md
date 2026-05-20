@@ -121,7 +121,7 @@ targets:
     interval_days: 30 # Runs once a month
 ```
 
-`mls` automatically tracks the last execution time of each command in its local cache (`~/Library/Caches/mls`) and will only run the command if the specified interval has passed.
+`mls` automatically tracks the last execution time of each command in its local cache (`~/Library/Caches/mls`). When a new command target is added, it will run upon the first execution of the cleanup. After it runs, the last run time is cached, and subsequent runs will only occur once the specified `interval_days` has passed.
 
 ---
 

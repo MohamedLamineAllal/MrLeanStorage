@@ -158,7 +158,7 @@ A list of directories to monitor or commands to execute.
 
 - `name`: A unique name for the command target.
 - `command`: The full system command to execute (e.g., `pnpm store prune` or `npm cache clean --force`).
-- `interval_days`: How often to run the command. `mls` tracks execution history in its local cache (`~/Library/Caches/mls/mls-cmd-<name>.lastrun`) to ensure it only runs once per interval.
+- `interval_days`: How often to run the command. `mls` tracks execution history in its local cache (`~/Library/Caches/mls/mls-cmd-<name>.lastrun`). When a new command target is added, it will execute immediately during the first cleanup run. After that, the execution time is cached, and the command will only run again once the specified interval has passed.
 
 **Example Configuration:**
 ```yaml

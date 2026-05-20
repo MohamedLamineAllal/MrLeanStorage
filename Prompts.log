@@ -163,3 +163,6 @@ please update the documentation
 readme user guide
 
 to include a section about setting up cleaning commands in configuration, like npm and pnpm cache cleaning commands
+
+## Prompt: 2026-05-20
+please add that for a new command target, when cleaning is executed the command will be run, and then last run is cached, and will run only after the schedule
