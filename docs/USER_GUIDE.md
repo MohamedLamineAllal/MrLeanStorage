@@ -76,10 +76,36 @@ This is ideal for keeping your Mac lean without manual intervention.
 
 > [!WARNING]
 > **Active Deletion Mode Enabled by Default in Background Automation**
-> 
+>
 > The `serve` command (and background launchd services started via `mls agent install` / `mls agent start`) **will physically delete matched files** (running with `dry_run: false` regardless of global config settings). This ensures background automation performs actual cleanups.
-> 
+>
 > Always verify your target patterns using `mls scan` first before initiating background automation!
+
+Instead of using `mls serve` you can setup a background agent that the system make sure it will be always running in background. Check Background Automation section bellow.
+
+## ⏰ Background Automation (macOS)
+
+Manage the background daemon seamlessly using standard `launchd` controls built right into the CLI:
+
+```bash
+# Install the launchd background agent
+mls agent install
+
+# Start the background service
+mls agent start
+
+# Check background daemon status
+mls agent status
+
+# Restart / Hot reload configuration
+mls agent restart
+
+# Stop the background service
+mls agent stop
+
+# Uninstall the background agent completely
+mls agent uninstall
+```
 
 ### `config open`
 

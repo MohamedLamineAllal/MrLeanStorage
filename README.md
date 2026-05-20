@@ -87,6 +87,25 @@ Execute the real cleanup by disabling dry-run:
 mls clean --dry-run=false
 ```
 
+### 4. Running Cleaning on a schedule
+
+As per configuration, default is running daily
+
+The `serve` command starts a background scheduler that runs the cleanup process according to the `schedule` defined in your configuration file.
+
+```bash
+mls serve
+```
+
+This is ideal for keeping your Mac lean without manual intervention.
+
+> [!WARNING]
+> **Active Deletion Mode Enabled by Default in Background Automation**
+>
+> The `serve` command (and background launchd services started via `mls agent install` / `mls agent start`) **will physically delete matched files** (running with `dry_run: false` regardless of global config settings). This ensures background automation performs actual cleanups.
+>
+> Always verify your target patterns using `mls scan` first before initiating background automation!
+
 ---
 
 ## ⏰ Background Automation (macOS)
@@ -115,9 +134,9 @@ mls agent uninstall
 
 > [!WARNING]
 > **Active Deletion Mode Enabled by Default in Background Automation**
-> 
+>
 > Starting `mls serve` or installing/starting the background agent (`mls agent install` / `mls agent start`) **will physically delete matched files** (running with `dry_run: false` regardless of global config settings). This ensures background automation performs actual cleanups.
-> 
+>
 > Always verify your target patterns using `mls scan` first before initiating background automation!
 
 ---
@@ -130,9 +149,9 @@ Please note that the background agent management commands (`mls agent ...`) are 
 
 The rest of the commands should work on all platforms:
 
-- `mls scan`: Scans targets for files and directories to clean based on your configuration.
-- `mls clean`: Scan and deletes files and directories identified during the scan.
-- `mls serve`: Starts the background scheduler loop to perform automated cleanup. You can use it with CLI on any platform, you can set it up as a daemon, or start when the system starts.
+- `mls scan`: Scans targets for files and directories to clean based on your configuration. (Cross-platform)
+- `mls clean`: Scan and deletes files and directories identified during the scan. (Cross-platform)
+- `mls serve`: Starts the background scheduler loop to perform automated cleanup. You can use it with CLI on any platform, you can set it up as a daemon, or start when the system starts. (Cross-platform)
   - > [!WARNING]
   - > Runs in **active deletion mode** (`dry_run: false` regardless of global config settings) to perform actual background cleanups. Verify your patterns with `mls scan` first!
 - `mls config open`: Opens the configuration file in your default system editor. (Cross-platform)
