@@ -121,3 +121,13 @@ Verified: All tests passed, built successfully, and validated documentation form
 Action: Updated the prompt logging guideline in AGENTS.md to ensure all future model interactions record user prompts exactly as they are given without any paraphrasing or truncating.
 Files updated:
 - AGENTS.md: Refined prompt logging section.
+
+## Action: 2026-05-20 (Cross-platform config reload implementation)
+Action: Designed and implemented a robust, fully cross-platform configuration reload mechanism. Introduced a reload signal file (`reload.signal` under local cache directory) touched by `mls config reload`. Refactored `cmd/serve.go` to periodically check (every 2 seconds) the signal file's modification time to reload Viper configuration dynamically across macOS, Linux, and Windows. Created `cmd/reload_unix.go` and `cmd/reload_windows.go` with build tags to handle platform-specific signal subscriptions (`syscall.SIGHUP` on Unix, no-op on Windows) without failing compilation on Windows.
+Files updated/created:
+- [NEW] cmd/reload_unix.go: Unix-specific signaling (SIGHUP subscription and process lookup).
+- [NEW] cmd/reload_windows.go: Windows-specific compile-safe signaling.
+- cmd/config.go: Refactored `reloadCmd` to update the signal file and invoke cross-platform signaling.
+- cmd/serve.go: Updated signaling loop to monitor both standard OS signals and `reload.signal` modification times.
+- README.md: Marked `mls config reload` as fully cross-platform.
+Verified: All compilation and race test validations passed.

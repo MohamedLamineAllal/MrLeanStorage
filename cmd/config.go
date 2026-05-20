@@ -3,10 +3,8 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"os/exec"
-	"strconv"
-	"strings"
-	"syscall"
+	"path/filepath"
+	"time"
 
 	"github.com/mohamedlamineallal/MrLeanStorage/internal/config"
 	"github.com/mohamedlamineallal/MrLeanStorage/internal/utils"
@@ -55,67 +53,26 @@ var revealCmd = &cobra.Command{
 // reloadCmd represents the config reload subcommand.
 // It signals all running background 'mls serve' processes to dynamically reload
 // their configurations from the disk. This allows instant updates to targets/schedules
-// without having to restart the macOS daemon manually.
+// cross-platform without having to restart the background services manually.
 var reloadCmd = &cobra.Command{
 	Use:          "reload",
 	Short:        "Reload the configuration for the running background agent",
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// Find the PIDs of all running mls serve processes
-		pids, err := findMLSServePIDs()
-		if err != nil {
+		// 1. Write the cross-platform reload signal file
+		sigPath := filepath.Join(utils.GetAppCacheDir(), "reload.signal")
+		timestamp := time.Now().Format(time.RFC3339Nano)
+		if err := os.WriteFile(sigPath, []byte(timestamp), 0644); err != nil {
+			return fmt.Errorf("failed to write reload signal file: %w", err)
+		}
+		colorSuccess.Println("Reload signal file updated successfully.")
+
+		// 2. Trigger platform-specific signaling (SIGHUP on Unix, no-op on Windows)
+		if err := reloadProcesses(); err != nil {
 			return err
-		}
-
-		var signalErrors []string
-		for _, pid := range pids {
-			if pid == os.Getpid() {
-				continue
-			}
-			process, err := os.FindProcess(pid)
-			if err != nil {
-				signalErrors = append(signalErrors, fmt.Sprintf("PID %d: %v", pid, err))
-				continue
-			}
-			if err := process.Signal(syscall.SIGHUP); err != nil {
-				signalErrors = append(signalErrors, fmt.Sprintf("PID %d: %v", pid, err))
-			} else {
-				colorSuccess.Printf("Reload signal sent to process %d successfully\n", pid)
-			}
-		}
-
-		if len(signalErrors) > 0 {
-			return fmt.Errorf("failed to signal some processes: %s", strings.Join(signalErrors, "; "))
 		}
 		return nil
 	},
-}
-
-// findMLSServePIDs queries the system using pgrep to find all process IDs (PIDs)
-// matching "mls serve". It filters out empty lines and invalid PIDs to ensure
-// signal execution targets only valid running server processes.
-func findMLSServePIDs() ([]int, error) {
-	out, err := exec.Command("pgrep", "-f", "mls serve").Output()
-	if err != nil {
-		// pgrep exits with status 1 if no process matches
-		return nil, fmt.Errorf("no running mls serve process found")
-	}
-	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
-	var pids []int
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if line == "" {
-			continue
-		}
-		pid, err := strconv.Atoi(line)
-		if err == nil {
-			pids = append(pids, pid)
-		}
-	}
-	if len(pids) == 0 {
-		return nil, fmt.Errorf("no running mls serve process found")
-	}
-	return pids, nil
 }
 
 func init() {

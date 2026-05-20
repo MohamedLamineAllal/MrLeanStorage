@@ -97,3 +97,6 @@ User requested to update the documentation (README.md and USER_GUIDE.md) to remo
 
 ## Prompt: 2026-05-20 (Update AGENTS.md prompt logging rule)
 please update AGENTS.md to make sure prompts.log should log the prompts exactly as the user prompt them
+
+## Prompt: 2026-05-20 (Cross-platform config reload)
+Can we make sure mls config reload is cross platform

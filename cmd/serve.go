@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"syscall"
 	"time"
 
 	"github.com/mohamedlamineallal/MrLeanStorage/internal/config"
@@ -107,6 +106,19 @@ var serveCmd = &cobra.Command{
 			return err
 		}
 
+		// Initialize the reload signal file state
+		sigPath := filepath.Join(utils.GetAppCacheDir(), "reload.signal")
+		var lastReloadTime time.Time
+		if info, err := os.Stat(sigPath); err == nil {
+			lastReloadTime = info.ModTime()
+		} else {
+			// If the file doesn't exist, establish a baseline modification time
+			_ = os.WriteFile(sigPath, []byte(time.Now().Format(time.RFC3339Nano)), 0644)
+			if info, err := os.Stat(sigPath); err == nil {
+				lastReloadTime = info.ModTime()
+			}
+		}
+
 		s.CheckForMissedTasks(task)
 		s.Start()
 		defer s.Stop()
@@ -116,7 +128,7 @@ var serveCmd = &cobra.Command{
 
 		// Setup signal handling for graceful shutdown and configuration reloading
 		sigChan := make(chan os.Signal, 1)
-		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
+		signal.Notify(sigChan, listenSignals...)
 
 		// doneChan is used to coordinate graceful shutdown without channel races
 		doneChan := make(chan struct{})
@@ -125,15 +137,41 @@ var serveCmd = &cobra.Command{
 		ticker := time.NewTicker(30 * time.Minute)
 		defer ticker.Stop()
 
-		// Background loop for signal handling and catch-up ticker
+		// Periodic check for config reload signal file every 2 seconds
+		reloadTicker := time.NewTicker(2 * time.Second)
+		defer reloadTicker.Stop()
+
+		// Background loop for signal handling, catch-up ticker, and reload file watcher
 		go func() {
 			for {
 				select {
 				case <-ticker.C:
 					s.CheckForMissedTasks(task)
+				case <-reloadTicker.C:
+					if info, err := os.Stat(sigPath); err == nil {
+						if info.ModTime().After(lastReloadTime) {
+							lastReloadTime = info.ModTime()
+							logger.Info("Reloading configuration (file signal detected)...")
+							newCfg, err := config.Load()
+							if err != nil {
+								logger.Error("Failed to reload config", zap.Error(err))
+								continue
+							}
+							cfg = newCfg
+							logger.Info("Configuration reloaded successfully")
+						}
+					}
 				case sig := <-sigChan:
-					if sig == syscall.SIGHUP {
-						logger.Info("Reloading configuration...")
+					// Check if signal matches SIGHUP/reloadSignals
+					isReload := false
+					for _, rs := range reloadSignals {
+						if sig == rs {
+							isReload = true
+							break
+						}
+					}
+					if isReload {
+						logger.Info("Reloading configuration (process signal SIGHUP received)...")
 						newCfg, err := config.Load()
 						if err != nil {
 							logger.Error("Failed to reload config", zap.Error(err))
