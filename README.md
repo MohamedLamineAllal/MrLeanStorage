@@ -37,6 +37,14 @@ brew tap MohamedLamineAllal/mls
 brew install mls
 ```
 
+For Updating
+
+```sh
+# Update mls to latest
+brew update
+brew install mls
+```
+
 *Note: Homebrew will automatically map this to our Cask distribution. If you encounter any checksum errors from outdated Formula caches, resolve them by running `brew update && brew tap --repair` first.*
 
 ### Linux & Windows

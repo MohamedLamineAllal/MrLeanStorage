@@ -20,6 +20,14 @@ brew tap MohamedLamineAllal/mls
 brew install mls
 ```
 
+For Updating
+
+```sh
+# Update mls to latest
+brew update
+brew install mls
+```
+
 *Note: Homebrew will automatically resolve `mls` to the cask distribution since the older source-based formula has been fully deprecated and deleted.*
 
 Alternatively, you can be explicit:
@@ -38,7 +46,7 @@ On macOS, binaries downloaded via browsers or third-party installers are automat
 
 ### Troubleshooting: Checksum Mismatch / Formula Errors
 
-If you previously had the older formula installed or cached, you might receive a verification checksum error (`Error: Formula reports different checksum: replace_with_sha256_hash`). 
+If you previously had the older formula installed or cached, you might receive a verification checksum error (`Error: Formula reports different checksum: replace_with_sha256_hash`).
 
 To resolve this and sync your local Homebrew Tap cache with the latest remote tap deletion, run:
 
