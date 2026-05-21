@@ -7,6 +7,28 @@ import (
 	"runtime"
 )
 
+// ExpandPath expands tilde (~) to the user home directory and environment variables
+// (e.g., %LOCALAPPDATA% on Windows).
+func ExpandPath(path string) (string, error) {
+	if len(path) == 0 {
+		return path, nil
+	}
+
+	// Expand environment variables (e.g., %LOCALAPPDATA%)
+	path = os.ExpandEnv(path)
+
+	// Expand tilde (~)
+	if path[0] == '~' {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		path = filepath.Join(home, path[1:])
+	}
+
+	return filepath.Clean(path), nil
+}
+
 // GetAppCacheDir returns the persistent cache directory for the application.
 // It falls back to the system temp directory if the user cache dir is unavailable.
 func GetAppCacheDir() string {
