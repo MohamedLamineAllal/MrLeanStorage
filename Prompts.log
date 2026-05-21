@@ -166,3 +166,5 @@ to include a section about setting up cleaning commands in configuration, like n
 
 ## Prompt: 2026-05-20
 please add that for a new command target, when cleaning is executed the command will be run, and then last run is cached, and will run only after the schedule
+Thu May 21 12:11:07 +08 2026
+ Fixed build error due to incorrect module path in internal/config/config.go imports.

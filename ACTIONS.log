@@ -206,3 +206,5 @@ Action: Updated .github/workflows/ci.yml to use a matrix strategy running go bui
 - **Context:** User requested specific mention that new command targets run immediately on first cleanup before entering the scheduled interval phase.
 - **Implementation:** Updated README.md and docs/USER_GUIDE.md to detail the "run-once-and-wait" behavior for newly added command targets.
 Fixed incorrect import path in internal/config/config.go to match module name in go.mod.
+Thu May 21 12:11:07 +08 2026
+ Updated internal/config/config.go import path to github.com/mohamedlamineallal/MrLeanStorage/internal/config/defaults.
